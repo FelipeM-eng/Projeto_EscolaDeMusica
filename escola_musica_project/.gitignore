@@ -1,0 +1,20 @@
+# Ambiente virtual
+venv/
+
+# Segredos — NUNCA commitar este ficheiro
+.env
+
+# Ficheiros Python compilados
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de dados local
+*.sqlite3
+
+# Ficheiros de sistema
+.DS_Store
+Thumbs.db
+
+media/          # Caso você venha a ter upload de arquivos de usuários
+static_root/    # Gerado pelo collectstatic em produção
