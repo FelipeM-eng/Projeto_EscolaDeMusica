@@ -1,4 +1,5 @@
 {% extends 'escola_musica/base.html' %}
+{% load static %}
 
 {% block titulo %}Nova Matrícula — Escola de Música{% endblock %}
 
@@ -9,12 +10,10 @@
       <h1 class="pagina-titulo">Nova Matrícula</h1>
       <p class="pagina-subtitulo">Preenche os dados para registar uma nova inscrição</p>
     </div>
-    <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
-      ← Cancelar
-    </a>
+    <a href="{% url 'matriculas_lista' %}" class="btn-secundario">← Cancelar</a>
   </div>
 
-  <form method="POST" action="{% url 'matricula_nova' %}" novalidate>
+  <form method="POST" action="{% url 'matricula_nova' %}" novalidate id="form-matricula-nova">
     {% csrf_token %}
 
     <div class="form-grid">
@@ -23,101 +22,69 @@
       <div class="form-secao">
         <h2 class="form-secao__titulo">📋 Dados da Matrícula</h2>
 
-        <div class="form-grupo">
-          <label for="{{ form_matricula.id_aluno.id_for_label }}">
-            {{ form_matricula.id_aluno.label }}
-          </label>
-          {{ form_matricula.id_aluno }}
-          {% if form_matricula.id_aluno.errors %}
-            <span class="form-erro">{{ form_matricula.id_aluno.errors|join:", " }}</span>
-          {% endif %}
-        </div>
+        {% for field in form_matricula %}
+          <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="obrigatorio" title="Campo obrigatório">*</span>
+              {% endif %}
+            </label>
+            {{ field }}
+            {% if field.errors %}
+              {% for erro in field.errors %}
+                <span class="form-erro" role="alert">{{ erro }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        {% endfor %}
 
-        <div class="form-grupo">
-          <label for="{{ form_matricula.id_curso.id_for_label }}">
-            {{ form_matricula.id_curso.label }}
-          </label>
-          {{ form_matricula.id_curso }}
-          {% if form_matricula.id_curso.errors %}
-            <span class="form-erro">{{ form_matricula.id_curso.errors|join:", " }}</span>
-          {% endif %}
-        </div>
+        <!-- Erros de validação cruzada (ex: matrícula duplicada) -->
+        {% if form_matricula.non_field_errors %}
+          <div class="alerta alerta--error" role="alert">
+            {% for erro in form_matricula.non_field_errors %}
+              <p>{{ erro }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
 
-        <div class="form-grupo">
-          <label for="{{ form_matricula.id_turma.id_for_label }}">
-            {{ form_matricula.id_turma.label }}
-          </label>
-          {{ form_matricula.id_turma }}
-          {% if form_matricula.id_turma.errors %}
-            <span class="form-erro">{{ form_matricula.id_turma.errors|join:", " }}</span>
-          {% endif %}
-        </div>
-
-        <div class="form-grupo">
-          <label for="{{ form_matricula.data_matricula.id_for_label }}">
-            {{ form_matricula.data_matricula.label }}
-          </label>
-          {{ form_matricula.data_matricula }}
-          {% if form_matricula.data_matricula.errors %}
-            <span class="form-erro">{{ form_matricula.data_matricula.errors|join:", " }}</span>
-          {% endif %}
-        </div>
-
-        <div class="form-grupo">
-          <label for="{{ form_matricula.ano_letivo.id_for_label }}">
-            {{ form_matricula.ano_letivo.label }}
-          </label>
-          {{ form_matricula.ano_letivo }}
-          {% if form_matricula.ano_letivo.errors %}
-            <span class="form-erro">{{ form_matricula.ano_letivo.errors|join:", " }}</span>
-          {% endif %}
-        </div>
       </div>
 
       <!-- Secção: Dados do pagamento -->
       <div class="form-secao">
         <h2 class="form-secao__titulo">💶 Dados do Pagamento</h2>
 
-        <div class="form-grupo">
-          <label for="{{ form_pagamento.data_pagamento.id_for_label }}">
-            {{ form_pagamento.data_pagamento.label }}
-          </label>
-          {{ form_pagamento.data_pagamento }}
-          {% if form_pagamento.data_pagamento.errors %}
-            <span class="form-erro">{{ form_pagamento.data_pagamento.errors|join:", " }}</span>
-          {% endif %}
-        </div>
+        {% for field in form_pagamento %}
+          <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="obrigatorio" title="Campo obrigatório">*</span>
+              {% endif %}
+            </label>
+            {{ field }}
+            {% if field.errors %}
+              {% for erro in field.errors %}
+                <span class="form-erro" role="alert">{{ erro }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        {% endfor %}
 
-        <div class="form-grupo">
-          <label for="{{ form_pagamento.valor_pago.id_for_label }}">
-            {{ form_pagamento.valor_pago.label }}
-          </label>
-          {{ form_pagamento.valor_pago }}
-          {% if form_pagamento.valor_pago.errors %}
-            <span class="form-erro">{{ form_pagamento.valor_pago.errors|join:", " }}</span>
-          {% endif %}
-        </div>
-
-        <div class="form-grupo">
-          <label for="{{ form_pagamento.status.id_for_label }}">
-            {{ form_pagamento.status.label }}
-          </label>
-          {{ form_pagamento.status }}
-          {% if form_pagamento.status.errors %}
-            <span class="form-erro">{{ form_pagamento.status.errors|join:", " }}</span>
-          {% endif %}
-        </div>
       </div>
 
     </div>
 
-    <!-- Botão de submissão -->
     <div class="form-acoes">
-      <button type="submit" class="btn-primario btn-grande">
+      <button type="submit" class="btn-primario btn-grande" id="btn-submeter">
         Registar Matrícula
       </button>
     </div>
 
   </form>
 
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{% static 'escola_musica/js/matriculas.js' %}"></script>
 {% endblock %}
