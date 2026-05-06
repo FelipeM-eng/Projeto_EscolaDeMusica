@@ -1,0 +1,85 @@
+{% extends 'escola_musica/base.html' %}
+
+{% block titulo %}Detalhe da Matrícula #{{ matricula.id_matricula }}{% endblock %}
+
+{% block conteudo %}
+
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 class="pagina-titulo">Matrícula #{{ matricula.id_matricula }}</h1>
+      <p class="pagina-subtitulo">Detalhe completo do registo</p>
+    </div>
+    <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
+      ← Voltar à lista
+    </a>
+  </div>
+
+  <div class="detalhe-grid">
+
+    <!-- Dados do aluno -->
+    <div class="detalhe-card">
+      <h2 class="detalhe-card__titulo">🎓 Aluno</h2>
+      <dl class="detalhe-lista">
+        <dt>Nome</dt>
+        <dd>{{ matricula.id_aluno.nome|default:"—" }}</dd>
+        <dt>Email</dt>
+        <dd>{{ matricula.id_aluno.email|default:"—" }}</dd>
+        <dt>Telefone</dt>
+        <dd>{{ matricula.id_aluno.telefone|default:"—" }}</dd>
+        <dt>Data de nascimento</dt>
+        <dd>{{ matricula.id_aluno.data_nascimento|date:"d/m/Y"|default:"—" }}</dd>
+      </dl>
+    </div>
+
+    <!-- Dados do curso e turma -->
+    <div class="detalhe-card">
+      <h2 class="detalhe-card__titulo">🎹 Curso e Turma</h2>
+      <dl class="detalhe-lista">
+        <dt>Curso</dt>
+        <dd>{{ matricula.id_curso.nome|default:"—" }}</dd>
+        <dt>Nível</dt>
+        <dd>{{ matricula.id_curso.nivel|default:"—" }}</dd>
+        <dt>Duração</dt>
+        <dd>{{ matricula.id_curso.duracao|default:"—" }}</dd>
+        <dt>Turma</dt>
+        <dd>{{ matricula.id_turma.nome_turma|default:"—" }}</dd>
+        <dt>Horário</dt>
+        <dd>{{ matricula.id_turma.horario|default:"—" }}</dd>
+      </dl>
+    </div>
+
+    <!-- Dados da matrícula -->
+    <div class="detalhe-card">
+      <h2 class="detalhe-card__titulo">📋 Matrícula</h2>
+      <dl class="detalhe-lista">
+        <dt>Ano letivo</dt>
+        <dd>{{ matricula.ano_letivo|default:"—" }}</dd>
+        <dt>Data de matrícula</dt>
+        <dd>{{ matricula.data_matricula|date:"d/m/Y"|default:"—" }}</dd>
+      </dl>
+    </div>
+
+    <!-- Dados do pagamento -->
+    <div class="detalhe-card">
+      <h2 class="detalhe-card__titulo">💶 Pagamento</h2>
+      {% if matricula.id_pagamento %}
+        <dl class="detalhe-lista">
+          <dt>Estado</dt>
+          <dd>
+            <span class="badge badge--{{ matricula.id_pagamento.status|lower }}">
+              {{ matricula.id_pagamento.status }}
+            </span>
+          </dd>
+          <dt>Valor pago</dt>
+          <dd>{{ matricula.id_pagamento.valor_pago }} €</dd>
+          <dt>Data de pagamento</dt>
+          <dd>{{ matricula.id_pagamento.data_pagamento|date:"d/m/Y"|default:"—" }}</dd>
+        </dl>
+      {% else %}
+        <p class="texto-suave">Sem pagamento associado.</p>
+      {% endif %}
+    </div>
+
+  </div>
+
+{% endblock %}

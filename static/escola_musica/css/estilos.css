@@ -498,3 +498,334 @@ body {
 .nav    { position: relative; z-index: 10; }
 .hero   { position: relative; z-index: 10; }
 .cards  { position: relative; z-index: 10; }
+
+/* ════════════════════════════════════════
+   PÁGINAS PROTEGIDAS — Layout base
+════════════════════════════════════════ */
+
+.pagina-protegida {
+  background-color: var(--cor-fundo);
+  min-height: 100vh;
+}
+
+/* ── Cabeçalho de página ── */
+.pagina-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ── Botão primário ── */
+.btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.4rem;
+  background: linear-gradient(135deg, var(--cor-primaria), #a07830);
+  border: none;
+  border-radius: 50px;
+  color: var(--cor-fundo);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primario:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* ── Tabela ── */
+.tabela-wrapper {
+  overflow-x: auto;
+  border-radius: var(--raio);
+  border: 1px solid var(--cor-borda);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tabela thead {
+  background: rgba(201, 168, 76, 0.08);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tabela th {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--cor-texto);
+  vertical-align: middle;
+}
+
+.tabela__linha:last-child td {
+  border-bottom: none;
+}
+
+.tabela__linha:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.th-acao {
+  text-align: center;
+}
+
+/* ── Células especiais ── */
+.aluno-nome {
+  font-weight: 600;
+  color: var(--cor-secundaria);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: var(--cor-primaria);
+  font-weight: 600;
+}
+
+.texto-suave {
+  color: var(--cor-texto-suave);
+}
+
+/* ── Botão ver detalhe ── */
+.btn-ver {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-ver:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+/* ── Estado vazio ── */
+.estado-vazio {
+  text-align: center;
+  padding: 4rem 2rem;
+  border: 1px dashed var(--cor-borda);
+  border-radius: var(--raio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.estado-vazio__icone {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+
+.estado-vazio__texto {
+  color: var(--cor-texto-suave);
+  font-size: 0.95rem;
+}
+
+/* ════════════════════════════════════════
+   ALERTAS / MENSAGENS
+════════════════════════════════════════ */
+.alerta {
+  padding: 0.85rem 1.2rem;
+  border-radius: var(--raio);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.alerta--success {
+  background: rgba(50, 200, 100, 0.12);
+  border: 1px solid rgba(50, 200, 100, 0.3);
+  color: #6fcf97;
+}
+
+.alerta--error {
+  background: rgba(220, 50, 50, 0.1);
+  border: 1px solid rgba(220, 50, 50, 0.3);
+  color: #f08080;
+}
+
+/* ════════════════════════════════════════
+   BOTÃO SECUNDÁRIO
+════════════════════════════════════════ */
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  color: var(--cor-texto-suave);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-secundario:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+/* ════════════════════════════════════════
+   DETALHE DE MATRÍCULA
+════════════════════════════════════════ */
+.detalhe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.detalhe-card {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 1.5rem;
+}
+
+.detalhe-card__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  color: var(--cor-primaria);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.detalhe-lista {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.detalhe-lista dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cor-texto-suave);
+  padding-top: 0.1rem;
+}
+
+.detalhe-lista dd {
+  font-size: 0.92rem;
+  color: var(--cor-texto);
+}
+
+/* badges de estado do pagamento */
+.badge--pago      { background: rgba(50,200,100,0.15); color: #6fcf97; border-color: rgba(50,200,100,0.3); }
+.badge--pendente  { background: rgba(240,180,0,0.15);  color: #f0c040; border-color: rgba(240,180,0,0.3); }
+.badge--cancelado { background: rgba(220,50,50,0.12);  color: #f08080; border-color: rgba(220,50,50,0.3); }
+
+/* ════════════════════════════════════════
+   FORMULÁRIO DE NOVA MATRÍCULA
+════════════════════════════════════════ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.form-secao {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 1.75rem;
+}
+
+.form-secao__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  color: var(--cor-primaria);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.form-grupo {
+  margin-bottom: 1.2rem;
+}
+
+.form-grupo label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.4rem;
+}
+
+.form-grupo input,
+.form-grupo select {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto);
+  font-size: 0.92rem;
+  font-family: var(--fonte-corpo);
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-grupo input:focus,
+.form-grupo select:focus {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+}
+
+.form-grupo select option {
+  background: #1a1a2e;
+  color: var(--cor-texto);
+}
+
+.form-erro {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: #f08080;
+}
+
+.form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+
+.btn-grande {
+  padding: 0.85rem 2.5rem;
+  font-size: 1rem;
+}
