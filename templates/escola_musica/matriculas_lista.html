@@ -1,0 +1,73 @@
+{% extends 'escola_musica/base.html' %}
+
+{% block titulo %}Matrículas — Escola de Música{% endblock %}
+
+{% block conteudo %}
+
+  <div class="pagina-cabecalho">
+    <div>
+      <h1 class="pagina-titulo">Matrículas</h1>
+      <p class="pagina-subtitulo">
+        {{ matriculas|length }} registo{{ matriculas|length|pluralize:",s" }} encontrado{{ matriculas|length|pluralize:",s" }}
+      </p>
+    </div>
+    <a href="{% url 'matricula_nova' %}" class="btn-primario">
+      + Nova matrícula
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alerta alerta--{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if matriculas %}
+    <div class="tabela-wrapper">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Aluno</th>
+            <th>Curso</th>
+            <th>Turma</th>
+            <th>Ano letivo</th>
+            <th>Data de matrícula</th>
+            <th class="th-acao">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in matriculas %}
+          <tr class="tabela__linha">
+            <td><span class="texto-suave">#{{ m.id_matricula }}</span></td>
+            <td><span class="aluno-nome">{{ m.id_aluno.nome }}</span></td>
+            <td>{{ m.id_curso.nome }}</td>
+            <td>{{ m.id_turma.nome_turma }}</td>
+            <td><span class="badge">{{ m.ano_letivo }}</span></td>
+            <td>
+              {% if m.data_matricula %}
+                {{ m.data_matricula|date:"d/m/Y" }}
+              {% else %}
+                <span class="texto-suave">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'matricula_detalhe' m.pk %}" class="btn-ver">Ver</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="estado-vazio">
+      <div class="estado-vazio__icone">🎵</div>
+      <p class="estado-vazio__texto">Ainda não existem matrículas registadas.</p>
+      <a href="{% url 'matricula_nova' %}" class="btn-primario">
+        Registar primeira matrícula
+      </a>
+    </div>
+  {% endif %}
+
+{% endblock %}

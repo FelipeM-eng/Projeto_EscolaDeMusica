@@ -180,35 +180,45 @@ class Pagamento(models.Model):
 
 
 class Matricula(models.Model):
+    id_matricula = models.AutoField(primary_key=True)
+
     id_aluno = models.ForeignKey(
         Aluno,
-        on_delete=models.DO_NOTHING,
+        models.DO_NOTHING,
         db_column='id_aluno'
     )
+
     id_curso = models.ForeignKey(
         Curso,
-        on_delete=models.DO_NOTHING,
+        models.DO_NOTHING,
         db_column='id_curso'
     )
+
     id_turma = models.ForeignKey(
         Turma,
-        on_delete=models.DO_NOTHING,
+        models.DO_NOTHING,
         db_column='id_turma'
     )
+
     id_pagamento = models.ForeignKey(
         Pagamento,
-        on_delete=models.DO_NOTHING,
+        models.DO_NOTHING,
         db_column='id_pagamento',
-        null=True, blank=True
+        blank=True,
+        null=True
     )
-    data_matricula = models.DateField(null=True, blank=True)
-    ano_letivo = models.IntegerField(null=True, blank=True)
+
+    data_matricula = models.DateField(blank=True, null=True)
+    ano_letivo = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'matricula'
-        unique_together = (('id_aluno', 'id_curso', 'id_turma'),)
+        unique_together = [('id_aluno', 'id_curso', 'id_turma')]
 
+    def __str__(self):
+        return f"Matrícula #{self.id_matricula}"
+    
 
 class Aula(models.Model):
     id_aula = models.AutoField(primary_key=True)

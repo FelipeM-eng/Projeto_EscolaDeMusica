@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}Escola de Música{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'escola_musica/css/estilos.css' %}">
+  {% block estilos_extra %}{% endblock %}
+</head>
+<body class="pagina-protegida">
+
+  <!-- ── Navbar partilhada por todas as páginas protegidas ── -->
+  <nav class="navbar">
+    <a href="{% url 'matriculas_lista' %}" class="navbar__logo">
+      🎵 Escola de Música
+    </a>
+
+    <div class="navbar__utilizador">
+      <span>{{ request.user.username }}</span>
+
+      <form id="form-logout" method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-logout">Sair</button>
+      </form>
+    </div>
+  </nav>
+
+  <!-- ── Conteúdo principal injetado por cada página ── -->
+  <main class="conteudo">
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <script src="{% static 'escola_musica/js/matriculas.js' %}"></script>
+  {% block scripts_extra %}{% endblock %}
+</body>
+</html>
