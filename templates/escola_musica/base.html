@@ -28,7 +28,21 @@
 
   <!-- ── Conteúdo principal injetado por cada página ── -->
   <main class="conteudo">
+
+    <!-- Mensagens globais do Django messages framework -->
+    {% if messages %}
+      <div class="mensagens">
+        {% for msg in messages %}
+          <div class="alerta alerta--{{ msg.tags }}" role="alert">
+            <span class="alerta__texto">{{ msg }}</span>
+            <button class="alerta__fechar" aria-label="Fechar">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% block conteudo %}{% endblock %}
+
   </main>
 
   <script src="{% static 'escola_musica/js/matriculas.js' %}"></script>

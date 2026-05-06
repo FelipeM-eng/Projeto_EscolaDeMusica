@@ -96,9 +96,65 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# ─── GESTÃO DE SESSÕES (Segurança) ───────────────────────────────────────────
+
+# Sessão expira ao fechar o browser — sem persistência indevida do sessionid
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Timeout de inatividade: 15 minutos (em segundos)
+# Após este período sem actividade, a sessão é invalidada
+SESSION_COOKIE_AGE = 900
+
+# Guarda a sessão a cada pedido para renovar o timeout com actividade real
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Impede que o JS aceda ao cookie de sessão (protecção contra XSS)
+SESSION_COOKIE_HTTPONLY = True
+
+# Impede envio do cookie em contextos cross-site (protecção contra CSRF)
+SESSION_COOKIE_SAMESITE = 'Lax'
+
 # As linhas abaixo exigem HTTPS. Deixa comentadas em desenvolvimento local,
 # descomenta quando fizeres deploy num servidor com HTTPS.
 # SECURE_SSL_REDIRECT = True
 # SESSION_COOKIE_SECURE = True
 # CSRF_COOKIE_SECURE = True
 # SECURE_HSTS_SECONDS = 3600
+
+
+# ─── LOGGING — erros internos registados, nunca expostos ao utilizador ────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'detalhadо': {
+            'format': '[{levelname}] {asctime} {module}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'ficheiro_erros': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'erros.log',
+            'formatter': 'detalhadо',
+        },
+        'consola': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'detalhadо',
+        },
+    },
+    'loggers': {
+        'escola_musica': {
+            'handlers': ['ficheiro_erros', 'consola'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['ficheiro_erros'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}

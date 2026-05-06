@@ -18,3 +18,7 @@ Thumbs.db
 
 media/          # Caso você venha a ter upload de arquivos de usuários
 static_root/    # Gerado pelo collectstatic em produção
+
+# Logs internos
+logs/
+*.log
