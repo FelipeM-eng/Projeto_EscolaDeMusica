@@ -49,6 +49,11 @@
           <td class="acoes-celula">
             <a href="{% url 'matricula_detalhe' m.pk %}" class="btn-ver">Ver</a>
             <a href="{% url 'matricula_editar'  m.pk %}" class="btn-editar">Editar</a>
+            {% if request.user.is_superuser %}
+              <a href="{% url 'matricula_eliminar' m.pk %}" class="btn-eliminar">
+                Eliminar
+              </a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
