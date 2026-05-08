@@ -1,15 +1,33 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+import datetime
 
 from .models import Matricula, Pagamento, Aluno, Curso, Turma
 
-DATA_MINIMA = timezone.datetime(1900, 1, 1).date()
-ANO_ATUAL   = timezone.now().year
+DATA_MINIMA  = datetime.date(1900, 1, 1)
+ANO_ATUAL    = timezone.now().year
+
+# Limite de retroactividade para datas de pagamento (utilizador normal)
+DIAS_RETROATIVOS_NORMAL = 60
+
+# Limite futuro para data de matrícula: 2 meses a partir de hoje
+def _data_maxima_matricula():
+    hoje = timezone.now().date()
+    mes  = hoje.month + 2
+    ano  = hoje.year + (mes - 1) // 12
+    mes  = ((mes - 1) % 12) + 1
+    try:
+        return hoje.replace(year=ano, month=mes)
+    except ValueError:
+        # Ajusta para o último dia do mês (ex: 31 jan + 2 meses)
+        import calendar
+        ultimo_dia = calendar.monthrange(ano, mes)[1]
+        return hoje.replace(year=ano, month=mes, day=ultimo_dia)
 
 
 # ─────────────────────────────────────────────────────────────
-# UTILITÁRIOS DE VALIDAÇÃO REUTILIZÁVEIS
+# UTILITÁRIOS
 # ─────────────────────────────────────────────────────────────
 
 def _validar_data_minima(valor, nome):
@@ -21,75 +39,49 @@ def _validar_data_minima(valor, nome):
 def _validar_nao_passada(valor, nome):
     if valor and valor < timezone.now().date():
         raise ValidationError(
-            f"'{nome}' não pode ser uma data anterior a hoje "
+            f"'{nome}' não pode ser anterior a hoje "
             f"({timezone.now().date().strftime('%d/%m/%Y')})."
         )
 
-
-# ─────────────────────────────────────────────────────────────
-# WIDGET PERSONALIZADO — aplica classes CSS a todos os inputs
-# ─────────────────────────────────────────────────────────────
-
 def _aplicar_atributos(fields):
-    """
-    Aplica atributos HTML5 de validação e classe CSS
-    a todos os campos do formulário.
-    """
-    for nome, field in fields.items():
-        widget = field.widget
-
-        # Classe CSS base para todos os inputs
-        attrs = widget.attrs
+    """Aplica classe CSS e atributo required a todos os campos."""
+    for field in fields.values():
+        attrs = field.widget.attrs
         if 'class' not in attrs:
             attrs['class'] = 'campo-input'
-
-        # required no HTML5 (reforço visual imediato)
         if field.required:
             attrs['required'] = True
 
-        # Placeholder específico por tipo
-        if isinstance(widget, forms.Select):
-            pass  # empty_label trata o placeholder
-
-        elif isinstance(widget, forms.NumberInput):
-            if 'placeholder' not in attrs:
-                attrs['placeholder'] = 'Introduz um número'
-
-        elif isinstance(widget, forms.DateInput):
-            attrs['type'] = 'date'
-            if 'min' not in attrs:
-                attrs['min'] = timezone.now().date().isoformat()
-
 
 # ─────────────────────────────────────────────────────────────
-# FORMULÁRIO DE PAGAMENTO — criação
+# OPÇÕES DE ESTADO
 # ─────────────────────────────────────────────────────────────
 
-# Opções partilhadas — definidas uma vez, usadas em ambos os formulários
-OPCOES_STATUS = [
+OPCOES_STATUS_NOVA = [
+    ('',         '— Seleciona o estado —'),
+    ('Pendente', 'Pendente'),
+    ('Pago',     'Pago'),
+]
+
+OPCOES_STATUS_EDICAO = [
     ('',          '— Seleciona o estado —'),
     ('Pendente',  'Pendente'),
     ('Pago',      'Pago'),
     ('Cancelado', 'Cancelado'),
 ]
 
-OPCOES_STATUS_NOVA = [
-    ('',         '— Seleciona o estado —'),
-    ('Pendente', 'Pendente'),
-    ('Pago',     'Pago'),
-    # Cancelado não aparece na criação
-]
 
+# ─────────────────────────────────────────────────────────────
+# FORMULÁRIO DE PAGAMENTO — criação
+# ─────────────────────────────────────────────────────────────
 
 class PagamentoForm(forms.ModelForm):
 
-    # Declara status como ChoiceField explícito
-    # Isto substitui o widget automático que não renderizava as opções
     status = forms.ChoiceField(
         choices=OPCOES_STATUS_NOVA,
         label='Estado do pagamento',
         error_messages={
-            'required': 'Seleciona o estado do pagamento.',
+            'required':       'Seleciona o estado do pagamento.',
             'invalid_choice': 'Estado inválido. Escolhe Pendente ou Pago.',
         },
         widget=forms.Select(attrs={'class': 'campo-input', 'required': True}),
@@ -102,7 +94,13 @@ class PagamentoForm(forms.ModelForm):
             'data_pagamento': forms.DateInput(
                 attrs={
                     'type':     'date',
-                    'min':      timezone.now().date().isoformat(),
+                    # Não pode ser futura — máximo = hoje
+                    'max':      timezone.now().date().isoformat(),
+                    # Mínimo = 60 dias atrás (utilizador normal)
+                    'min':      (
+                        timezone.now().date() -
+                        datetime.timedelta(days=DIAS_RETROATIVOS_NORMAL)
+                    ).isoformat(),
                     'class':    'campo-input',
                     'required': True,
                 },
@@ -136,16 +134,48 @@ class PagamentoForm(forms.ModelForm):
             },
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, utilizador=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Guarda o utilizador para usar na validação de retroactividade
+        self.utilizador = utilizador
         for field in self.fields.values():
             field.required = True
+        _aplicar_atributos(self.fields)
 
     def clean_data_pagamento(self):
-        data = self.cleaned_data.get('data_pagamento')
+        data  = self.cleaned_data.get('data_pagamento')
+        hoje  = timezone.now().date()
+
         if not data:
             raise ValidationError("A data de pagamento é obrigatória.")
+
         _validar_data_minima(data, "Data de pagamento")
+
+        # Regra 1: não pode ser futura
+        if data > hoje:
+            raise ValidationError(
+                "A data de pagamento não pode ser uma data futura. "
+                f"A data máxima permitida é {hoje.strftime('%d/%m/%Y')}."
+            )
+
+        # Regra 2: retroactividade limitada para utilizadores normais
+        is_admin = (
+            self.utilizador and
+            (self.utilizador.is_superuser or self.utilizador.is_staff)
+        )
+        if not is_admin:
+            data_minima_retro = hoje - datetime.timedelta(
+                days=DIAS_RETROATIVOS_NORMAL
+            )
+            if data < data_minima_retro:
+                raise ValidationError(
+                    f"Não é possível registar pagamentos com mais de "
+                    f"{DIAS_RETROATIVOS_NORMAL} dias de retroactividade "
+                    f"(mínimo permitido: "
+                    f"{data_minima_retro.strftime('%d/%m/%Y')}). "
+                    "Contacta um administrador para lançamentos anteriores."
+                )
+
         return data
 
     def clean_valor_pago(self):
@@ -175,16 +205,14 @@ class PagamentoForm(forms.ModelForm):
 
 
 # ─────────────────────────────────────────────────────────────
-# FORMULÁRIO DE PAGAMENTO — edição (permite Cancelado)
+# FORMULÁRIO DE PAGAMENTO — edição
 # ─────────────────────────────────────────────────────────────
 
 class PagamentoEdicaoForm(PagamentoForm):
-    """
-    Variante para edição — inclui Cancelado como opção válida.
-    """
+    """Permite Cancelado e aplica as mesmas regras de datas."""
 
     status = forms.ChoiceField(
-        choices=OPCOES_STATUS,  # inclui Cancelado
+        choices=OPCOES_STATUS_EDICAO,
         label='Estado do pagamento',
         error_messages={
             'required':       'Seleciona o estado do pagamento.',
@@ -197,17 +225,16 @@ class PagamentoEdicaoForm(PagamentoForm):
         status = self.cleaned_data.get('status')
         if not status:
             raise ValidationError("Seleciona o estado do pagamento.")
-        opcoes_validas = ['Pendente', 'Pago', 'Cancelado']
-        if status not in opcoes_validas:
+        opcoes = ['Pendente', 'Pago', 'Cancelado']
+        if status not in opcoes:
             raise ValidationError(
-                f"Estado inválido. Escolhe entre: "
-                f"{', '.join(opcoes_validas)}."
+                f"Estado inválido. Escolhe entre: {', '.join(opcoes)}."
             )
         return status
 
 
 # ─────────────────────────────────────────────────────────────
-# FORMULÁRIO DE MATRÍCULA — criação e edição
+# FORMULÁRIO DE MATRÍCULA
 # ─────────────────────────────────────────────────────────────
 
 class MatriculaForm(forms.ModelForm):
@@ -216,16 +243,21 @@ class MatriculaForm(forms.ModelForm):
         model  = Matricula
         fields = [
             'id_aluno', 'id_curso', 'id_turma',
-            'data_matricula', 'ano_letivo'
+            'data_matricula', 'ano_letivo',
         ]
         widgets = {
-            'id_aluno': forms.Select(),
-            'id_curso': forms.Select(),
-            'id_turma': forms.Select(),
+            'id_aluno': forms.Select(attrs={'class': 'campo-input'}),
+            'id_curso': forms.Select(attrs={'class': 'campo-input'}),
+            'id_turma': forms.Select(attrs={'class': 'campo-input'}),
             'data_matricula': forms.DateInput(
                 attrs={
-                    'type': 'date',
-                    'min':  timezone.now().date().isoformat(),
+                    'type':     'date',
+                    'min':      timezone.now().date().isoformat(),
+                    'max':      _data_maxima_matricula().isoformat(),
+                    'class':    'campo-input',
+                    'required': True,
+                    # ID usado pelo JS para preencher o ano letivo
+                    'id':       'id_data_matricula',
                 },
                 format='%Y-%m-%d'
             ),
@@ -235,6 +267,10 @@ class MatriculaForm(forms.ModelForm):
                     'max':         '2100',
                     'placeholder': str(ANO_ATUAL),
                     'step':        '1',
+                    'class':       'campo-input',
+                    'required':    True,
+                    # ID usado pelo JS para preenchimento automático
+                    'id':          'id_ano_letivo',
                 }
             ),
         }
@@ -267,30 +303,15 @@ class MatriculaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Querysets ordenados
-        self.fields['id_aluno'].queryset = (
-            Aluno.objects.order_by('nome')
-        )
-        self.fields['id_curso'].queryset = (
-            Curso.objects.order_by('nome')
-        )
-        self.fields['id_turma'].queryset = (
-            Turma.objects.order_by('nome_turma')
-        )
-
-        # Placeholders dos selects
+        self.fields['id_aluno'].queryset    = Aluno.objects.order_by('nome')
+        self.fields['id_curso'].queryset    = Curso.objects.order_by('nome')
+        self.fields['id_turma'].queryset    = Turma.objects.order_by('nome_turma')
         self.fields['id_aluno'].empty_label = '— Seleciona o aluno —'
         self.fields['id_curso'].empty_label = '— Seleciona o curso —'
         self.fields['id_turma'].empty_label = '— Seleciona a turma —'
-
-        # Todos os campos obrigatórios
         for field in self.fields.values():
             field.required = True
-
         _aplicar_atributos(self.fields)
-
-    # ── Validações individuais ──────────────────────────────
 
     def clean_id_aluno(self):
         aluno = self.cleaned_data.get('id_aluno')
@@ -311,11 +332,29 @@ class MatriculaForm(forms.ModelForm):
         return turma
 
     def clean_data_matricula(self):
-        data = self.cleaned_data.get('data_matricula')
+        data  = self.cleaned_data.get('data_matricula')
+        hoje  = timezone.now().date()
+        maxima = _data_maxima_matricula()
+
         if not data:
             raise ValidationError("A data de matrícula é obrigatória.")
+
         _validar_data_minima(data, "Data de matrícula")
-        _validar_nao_passada(data, "Data de matrícula")
+
+        # Não pode ser anterior a hoje
+        if data < hoje:
+            raise ValidationError(
+                "A data de matrícula não pode ser anterior a hoje "
+                f"({hoje.strftime('%d/%m/%Y')})."
+            )
+
+        # Máximo 2 meses no futuro
+        if data > maxima:
+            raise ValidationError(
+                "A data de matrícula não pode ser superior a 2 meses "
+                f"a partir de hoje (máximo: {maxima.strftime('%d/%m/%Y')})."
+            )
+
         return data
 
     def clean_ano_letivo(self):
@@ -332,29 +371,38 @@ class MatriculaForm(forms.ModelForm):
             )
         return ano
 
-    # ── Validação cruzada — duplicados ─────────────────────
-
     def clean(self):
+        """Validações cruzadas entre campos."""
         cleaned = super().clean()
-        aluno = cleaned.get('id_aluno')
-        curso = cleaned.get('id_curso')
-        turma = cleaned.get('id_turma')
+        aluno   = cleaned.get('id_aluno')
+        curso   = cleaned.get('id_curso')
+        turma   = cleaned.get('id_turma')
+        data    = cleaned.get('data_matricula')
 
+        # Regra: data de matrícula >= data de nascimento do aluno
+        if aluno and data and aluno.data_nascimento:
+            if data < aluno.data_nascimento:
+                self.add_error(
+                    'data_matricula',
+                    f"A data de matrícula ({data.strftime('%d/%m/%Y')}) "
+                    f"não pode ser anterior à data de nascimento do aluno "
+                    f"({aluno.data_nascimento.strftime('%d/%m/%Y')})."
+                )
+
+        # Regra: sem matrículas duplicadas
         if aluno and curso and turma:
             qs = Matricula.objects.filter(
                 id_aluno=aluno,
                 id_curso=curso,
                 id_turma=turma,
             )
-            # Na edição, exclui o próprio registo
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
-
             if qs.exists():
                 raise ValidationError(
                     f"O aluno '{aluno.nome}' já está matriculado "
-                    f"no curso '{curso.nome}' / turma "
-                    f"'{turma.nome_turma}'. "
+                    f"no curso '{curso.nome}' / turma '{turma.nome_turma}'. "
                     "Não é possível criar uma matrícula duplicada."
                 )
+
         return cleaned

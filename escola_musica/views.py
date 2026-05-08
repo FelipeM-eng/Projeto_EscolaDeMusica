@@ -56,17 +56,13 @@ def logout_view(request):
 
 @login_required
 def matriculas_lista(request):
-    """
-    Lista matrículas.
-    Lê dados de pré-confirmação da session — se existirem,
-    abre a modal ANTES de guardar na BD.
-    """
     pendente = request.session.get('matricula_pendente', None)
 
     matriculas = (
         Matricula.objects
         .select_related('id_aluno', 'id_curso', 'id_turma', 'id_pagamento')
-        .order_by('-data_matricula')
+        # Ordenação alfabética pelo nome do aluno (ascendente)
+        .order_by('id_aluno__nome')
     )
     return render(request, 'escola_musica/matriculas_lista.html', {
         'matriculas': matriculas,
@@ -84,7 +80,10 @@ def matricula_nova(request):
            A BD NÃO é tocada ainda.
     """
     form_matricula = MatriculaForm(request.POST or None)
-    form_pagamento = PagamentoForm(request.POST or None)
+    form_pagamento = PagamentoForm(
+        request.POST or None,
+        utilizador=request.user      # ← passa utilizador para validação de retroactividade
+    )
 
     if request.method == 'POST':
         mat_valida = form_matricula.is_valid()
@@ -235,7 +234,8 @@ def matricula_editar(request, pk):
     )
     form_pagamento = PagamentoEdicaoForm(
         request.POST or None,
-        instance=pagamento
+        instance=pagamento,
+        utilizador=request.user      # ← passa utilizador
     )
 
     if request.method == 'POST':
@@ -289,4 +289,64 @@ def matricula_editar(request, pk):
         'form_matricula': form_matricula,
         'form_pagamento': form_pagamento,
         'matricula':      matricula,
+    })
+
+@login_required
+def matricula_eliminar(request, pk):
+    """
+    Apenas superutilizadores podem eliminar matrículas.
+    GET  → página de confirmação com dados da matrícula
+    POST → elimina matrícula e pagamento associado
+    """
+    # Verificação de permissão — camada da view
+    if not request.user.is_superuser:
+        messages.error(
+            request,
+            "Não tens permissão para eliminar matrículas. "
+            "Esta acção está reservada a administradores."
+        )
+        return redirect('matriculas_lista')
+
+    matricula = get_object_or_404(
+        Matricula.objects.select_related(
+            'id_aluno', 'id_curso', 'id_turma', 'id_pagamento'
+        ),
+        pk=pk
+    )
+
+    if request.method == 'POST':
+        try:
+            pagamento    = matricula.id_pagamento
+            id_matricula = matricula.id_matricula
+            nome_aluno   = matricula.id_aluno.nome
+
+            # Elimina a matrícula primeiro (tem FK para pagamento)
+            matricula.delete()
+
+            # Elimina o pagamento que ficou órfão
+            if pagamento:
+                pagamento.delete()
+
+            messages.success(
+                request,
+                f"Matrícula #{id_matricula} do aluno '{nome_aluno}' "
+                "eliminada com sucesso."
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Erro ao eliminar matrícula pk={pk} | "
+                f"user={request.user.username} | erro={e}"
+            )
+            messages.error(
+                request,
+                "Não foi possível eliminar a matrícula. "
+                "Tenta novamente ou contacta o administrador."
+            )
+
+        return redirect('matriculas_lista')
+
+    # GET → página de confirmação
+    return render(request, 'escola_musica/matricula_eliminar.html', {
+        'matricula': matricula,
     })

@@ -1,0 +1,77 @@
+{% extends 'escola_musica/base.html' %}
+
+{% block titulo %}Eliminar Matrícula #{{ matricula.id_matricula }}{% endblock %}
+
+{% block conteudo %}
+
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Eliminar Matrícula</h1>
+    <p class="pagina-subtitulo">Esta acção é irreversível.</p>
+  </div>
+  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">← Cancelar</a>
+</div>
+
+<!-- Card de aviso -->
+<div class="eliminar-card">
+
+  <div class="eliminar-card__aviso">
+    <span class="eliminar-card__icone">⚠</span>
+    <div>
+      <p class="eliminar-card__titulo">
+        Tens a certeza que queres eliminar esta matrícula?
+      </p>
+      <p class="eliminar-card__descricao">
+        Esta acção eliminará permanentemente a matrícula e o
+        pagamento associado. Não é possível reverter esta operação.
+      </p>
+    </div>
+  </div>
+
+  <!-- Resumo da matrícula a eliminar -->
+  <dl class="detalhe-lista eliminar-card__dados">
+    <dt>Matrícula</dt>
+    <dd>#{{ matricula.id_matricula }}</dd>
+
+    <dt>Aluno</dt>
+    <dd>{{ matricula.id_aluno.nome }}</dd>
+
+    <dt>Curso</dt>
+    <dd>{{ matricula.id_curso.nome }}</dd>
+
+    <dt>Turma</dt>
+    <dd>{{ matricula.id_turma.nome_turma }}</dd>
+
+    <dt>Ano letivo</dt>
+    <dd>{{ matricula.ano_letivo|default:"—" }}</dd>
+
+    {% if matricula.id_pagamento %}
+      <dt>Pagamento</dt>
+      <dd>
+        {{ matricula.id_pagamento.valor_pago }} € —
+        <span class="badge badge--{{ matricula.id_pagamento.status|lower }}">
+          {{ matricula.id_pagamento.status }}
+        </span>
+      </dd>
+    {% endif %}
+  </dl>
+
+  <!-- Acções -->
+  <div class="eliminar-card__acoes">
+    <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
+      Cancelar — manter matrícula
+    </a>
+
+    <form method="POST"
+          action="{% url 'matricula_eliminar' matricula.pk %}"
+          id="form-eliminar">
+      {% csrf_token %}
+      <button type="submit" class="btn-eliminar-confirmar">
+        Confirmar eliminação
+      </button>
+    </form>
+  </div>
+
+</div>
+
+{% endblock %}

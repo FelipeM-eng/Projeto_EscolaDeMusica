@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
   /* ──────────────────────────────────────────
-     5. DATEPICKER — reforço do min = hoje
+     5. DATEPICKER — min = hoje + ano letivo automático
   ────────────────────────────────────────── */
   var hoje = new Date().toISOString().split('T')[0];
 
@@ -117,16 +117,62 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     input.addEventListener('change', function () {
       var min = input.getAttribute('min');
+      var max = input.getAttribute('max');
       if (min && input.value && input.value < min) {
         input.setCustomValidity(
           'A data não pode ser anterior a ' +
           new Date(min + 'T00:00:00').toLocaleDateString('pt-PT') + '.'
         );
         input.reportValidity();
-      } else {
-        input.setCustomValidity('');
+        return;
       }
+      if (max && input.value && input.value > max) {
+        input.setCustomValidity(
+          'A data não pode ser posterior a ' +
+          new Date(max + 'T00:00:00').toLocaleDateString('pt-PT') + '.'
+        );
+        input.reportValidity();
+        return;
+      }
+      input.setCustomValidity('');
     });
   });
+
+  /* ──────────────────────────────────────────
+     6. ANO LETIVO AUTOMÁTICO
+     Quando o utilizador seleciona a data de matrícula,
+     preenche automaticamente o ano letivo com o ano
+     da data escolhida — mas permite edição manual.
+  ────────────────────────────────────────── */
+  var inputData    = document.getElementById('id_data_matricula');
+  var inputAno     = document.getElementById('id_ano_letivo');
+
+  if (inputData && inputAno) {
+    inputData.addEventListener('change', function () {
+      var valor = inputData.value;
+      if (!valor) return;
+
+      var ano = new Date(valor + 'T00:00:00').getFullYear();
+      if (!isNaN(ano)) {
+        // Só preenche automaticamente se o campo estiver vazio
+        // ou se o utilizador não o tiver alterado manualmente
+        if (!inputAno.dataset.editadoManualmente) {
+          inputAno.value = ano;
+        }
+      }
+    });
+
+    // Marca o campo como editado manualmente se o utilizador o alterar
+    inputAno.addEventListener('input', function () {
+      inputAno.dataset.editadoManualmente = '1';
+    });
+
+    // Reset da marca se o utilizador limpar o campo
+    inputAno.addEventListener('change', function () {
+      if (!inputAno.value) {
+        delete inputAno.dataset.editadoManualmente;
+      }
+    });
+  }
 
 });
