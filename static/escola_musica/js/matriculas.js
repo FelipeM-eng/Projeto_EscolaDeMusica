@@ -1,72 +1,102 @@
 /* ═══════════════════════════════════════════════
-   ESCOLA DE MÚSICA — Comportamento JS
-   Separado do HTML conforme regras do projeto
+   ESCOLA DE MÚSICA — JS principal
+   Responsabilidades:
+     1. Modal de confirmação de matrícula
+     2. Fechar alertas
+     3. Feedback visual em submits
+     4. Confirmação antes de logout manual
+     5. Validação de datepicker
+   
+   Gestão de sessão: delegada inteiramente ao Django.
+   Não existe lógica de logout automático neste ficheiro.
 ═══════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ──────────────────────────────────────────
-     1. FECHAR ALERTAS MANUALMENTE
+     1. MODAL DE CONFIRMAÇÃO
+  ────────────────────────────────────────── */
+  var modal = document.getElementById('modal-confirmacao');
+
+  if (modal) {
+    // Foco no primeiro botão ao abrir
+    var primeiroBotao = modal.querySelector('button, a');
+    if (primeiroBotao) primeiroBotao.focus();
+
+    // Fechar com tecla Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') fecharModal();
+    });
+
+    // Fechar ao clicar no fundo escuro (fora do card)
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) fecharModal();
+    });
+  }
+
+  function fecharModal() {
+    if (!modal) return;
+    modal.style.transition = 'opacity 0.3s ease';
+    modal.style.opacity = '0';
+    setTimeout(function () {
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+    }, 300);
+  }
+
+
+  /* ──────────────────────────────────────────
+     2. FECHAR ALERTAS MANUALMENTE
   ────────────────────────────────────────── */
   document.querySelectorAll('.alerta__fechar').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      btn.closest('.alerta').remove();
+      var alerta = btn.closest('.alerta');
+      if (!alerta) return;
+      alerta.style.transition = 'opacity 0.3s ease';
+      alerta.style.opacity = '0';
+      setTimeout(function () {
+        if (alerta.parentNode) alerta.parentNode.removeChild(alerta);
+      }, 300);
     });
   });
 
-  /* ──────────────────────────────────────────
-     2. AUTO-FECHAR ALERTAS DE SUCESSO (5s)
-  ────────────────────────────────────────── */
+  // Auto-fechar alertas de sucesso após 5 segundos
   document.querySelectorAll('.alerta--success').forEach(function (alerta) {
     setTimeout(function () {
       alerta.style.transition = 'opacity 0.5s ease';
       alerta.style.opacity = '0';
-      setTimeout(function () { alerta.remove(); }, 500);
+      setTimeout(function () {
+        if (alerta.parentNode) alerta.parentNode.removeChild(alerta);
+      }, 500);
     }, 5000);
   });
 
-  /* ──────────────────────────────────────────
-     3. DATEPICKER — garantir data mínima = hoje
-     (reforço JS além do atributo min no HTML)
-  ────────────────────────────────────────── */
-  const hoje = new Date().toISOString().split('T')[0];
 
-  document.querySelectorAll('input[type="date"]').forEach(function (input) {
-    // Só aplica min se não tiver já um definido pelo backend
-    if (!input.getAttribute('min')) {
-      input.setAttribute('min', hoje);
-    }
-    // Validação ao mudar o valor
-    input.addEventListener('change', function () {
-      if (input.value < input.getAttribute('min')) {
-        input.setCustomValidity(
-          'A data não pode ser anterior ao mínimo permitido.'
-        );
-        input.reportValidity();
-      } else {
-        input.setCustomValidity('');
+  /* ──────────────────────────────────────────
+     3. FEEDBACK VISUAL NOS SUBMITS
+  ────────────────────────────────────────── */
+  var submitConfigs = [
+    { formId: 'form-matricula-nova',   btnId: 'btn-submeter',  texto: 'A validar...'  },
+    { formId: 'form-confirmar',        btnId: 'btn-confirmar', texto: 'A registar...' },
+    { formId: 'form-matricula-editar', btnId: 'btn-guardar',   texto: 'A guardar...'  },
+  ];
+
+  submitConfigs.forEach(function (cfg) {
+    var form = document.getElementById(cfg.formId);
+    if (!form) return;
+    form.addEventListener('submit', function () {
+      var btn = document.getElementById(cfg.btnId);
+      if (btn) {
+        btn.textContent = cfg.texto;
+        btn.disabled = true;
       }
     });
   });
 
-  /* ──────────────────────────────────────────
-     4. FEEDBACK VISUAL NO SUBMIT
-  ────────────────────────────────────────── */
-  const formNova = document.getElementById('form-matricula-nova');
-  if (formNova) {
-    formNova.addEventListener('submit', function () {
-      const btn = document.getElementById('btn-submeter');
-      if (btn) {
-        btn.textContent = 'A registar...';
-        btn.disabled = true;
-      }
-    });
-  }
 
   /* ──────────────────────────────────────────
-     5. CONFIRMAÇÃO ANTES DE LOGOUT
+     4. CONFIRMAÇÃO ANTES DE LOGOUT MANUAL
   ────────────────────────────────────────── */
-  const formLogout = document.getElementById('form-logout');
+  var formLogout = document.getElementById('form-logout');
   if (formLogout) {
     formLogout.addEventListener('submit', function (e) {
       if (!confirm('Tens a certeza que queres terminar a sessão?')) {
@@ -75,18 +105,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+
   /* ──────────────────────────────────────────
-     6. FEEDBACK NO FORMULÁRIO DE LOGIN
+     5. DATEPICKER — reforço do min = hoje
   ────────────────────────────────────────── */
-  const formLogin = document.getElementById('form-login');
-  if (formLogin) {
-    formLogin.addEventListener('submit', function () {
-      const btn = formLogin.querySelector('.btn-entrar');
-      if (btn) {
-        btn.textContent = 'A entrar...';
-        btn.disabled = true;
+  var hoje = new Date().toISOString().split('T')[0];
+
+  document.querySelectorAll('input[type="date"]').forEach(function (input) {
+    if (!input.getAttribute('min')) {
+      input.setAttribute('min', hoje);
+    }
+    input.addEventListener('change', function () {
+      var min = input.getAttribute('min');
+      if (min && input.value && input.value < min) {
+        input.setCustomValidity(
+          'A data não pode ser anterior a ' +
+          new Date(min + 'T00:00:00').toLocaleDateString('pt-PT') + '.'
+        );
+        input.reportValidity();
+      } else {
+        input.setCustomValidity('');
       }
     });
-  }
+  });
 
 });

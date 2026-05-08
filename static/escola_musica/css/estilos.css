@@ -908,3 +908,251 @@ body {
   margin-left: 0.2rem;
   font-weight: 700;
 }
+
+/* nota auxiliar do formulário */
+.form-nota {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  max-width: 400px;
+  line-height: 1.5;
+  margin-right: auto;
+}
+
+/* erro com ícone */
+.form-erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: #f08080;
+  line-height: 1.4;
+}
+
+.form-erro__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: rgba(220, 50, 50, 0.25);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ════════════════════════════════════════
+   MODAL — correcções de overlay
+════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.modal-overlay--visivel {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: #12121a;
+  border: 1px solid var(--cor-borda);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7);
+  transform: translateY(24px) scale(0.98);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay--visivel .modal {
+  transform: translateY(0) scale(1);
+}
+
+.modal__cabecalho {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.12),
+    rgba(123, 79, 166, 0.08)
+  );
+  padding: 1.75rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.modal__icone-alerta {
+  width: 52px;
+  height: 52px;
+  background: rgba(240, 180, 0, 0.15);
+  border: 2px solid rgba(240, 180, 0, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #f0c040;
+  margin: 0 auto 1rem;
+}
+
+.modal__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  color: var(--cor-primaria);
+  margin-bottom: 0.4rem;
+}
+
+.modal__subtitulo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.5;
+}
+
+.modal__subtitulo strong {
+  color: var(--cor-primaria);
+}
+
+.modal__corpo {
+  padding: 1.5rem 2rem;
+}
+
+.modal__lista {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.65rem 1rem;
+}
+
+.modal__lista dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+}
+
+.modal__lista dd {
+  font-size: 0.93rem;
+  color: var(--cor-texto);
+  display: flex;
+  align-items: center;
+}
+
+.modal__rodape {
+  padding: 1.25rem 2rem 1.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid var(--cor-borda);
+  flex-wrap: wrap;
+}
+
+/* ════════════════════════════════════════
+   BOTÃO EDITAR na tabela
+════════════════════════════════════════ */
+.btn-editar {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(123, 79, 166, 0.4);
+  border-radius: 50px;
+  color: rgba(180, 140, 220, 0.9);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-left: 0.4rem;
+}
+
+.btn-editar:hover {
+  border-color: var(--cor-acento);
+  color: #c89eff;
+  background: rgba(123, 79, 166, 0.1);
+}
+
+.acoes-celula {
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════
+   VALIDAÇÃO DE CAMPOS — estados visuais
+════════════════════════════════════════ */
+
+/* Campo com erro — borda vermelha */
+.form-grupo--erro .campo-input,
+.form-grupo--erro input,
+.form-grupo--erro select {
+  border-color: rgba(220, 50, 50, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(220, 50, 50, 0.12) !important;
+}
+
+/* Campo válido — borda verde subtil */
+.form-grupo input:valid:not(:placeholder-shown),
+.form-grupo select:valid {
+  border-color: rgba(50, 200, 100, 0.4);
+}
+
+/* Mensagem de erro com ícone */
+.form-erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: #f08080;
+  line-height: 1.4;
+  animation: entrar-erro 0.2s ease;
+}
+
+@keyframes entrar-erro {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-erro__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  background: rgba(220, 50, 50, 0.25);
+  border-radius: 50%;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Campo obrigatório — asterisco */
+.obrigatorio {
+  color: #f08080;
+  margin-left: 0.2rem;
+  font-weight: 700;
+}
+
+/* Select — estilo consistente com inputs */
+.form-grupo select.campo-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a09880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.form-grupo select.campo-input option[value=""] {
+  color: rgba(160, 152, 128, 0.6);
+}
