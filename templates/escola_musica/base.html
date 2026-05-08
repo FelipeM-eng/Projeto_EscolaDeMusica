@@ -10,15 +10,12 @@
 </head>
 <body class="pagina-protegida">
 
-  <!-- ── Navbar partilhada por todas as páginas protegidas ── -->
   <nav class="navbar">
     <a href="{% url 'matriculas_lista' %}" class="navbar__logo">
       🎵 Escola de Música
     </a>
-
     <div class="navbar__utilizador">
       <span>{{ request.user.username }}</span>
-
       <form id="form-logout" method="POST" action="{% url 'logout' %}">
         {% csrf_token %}
         <button type="submit" class="btn-logout">Sair</button>
@@ -26,10 +23,7 @@
     </div>
   </nav>
 
-  <!-- ── Conteúdo principal injetado por cada página ── -->
   <main class="conteudo">
-
-    <!-- Mensagens globais do Django messages framework -->
     {% if messages %}
       <div class="mensagens">
         {% for msg in messages %}
@@ -42,8 +36,10 @@
     {% endif %}
 
     {% block conteudo %}{% endblock %}
-
   </main>
+
+  <!-- Bloco de modais — renderizado fora do <main> para overlay correcto -->
+  {% block modal %}{% endblock %}
 
   <script src="{% static 'escola_musica/js/matriculas.js' %}"></script>
   {% block scripts_extra %}{% endblock %}

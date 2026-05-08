@@ -96,23 +96,6 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# ─── GESTÃO DE SESSÕES (Segurança) ───────────────────────────────────────────
-
-# Sessão expira ao fechar o browser — sem persistência indevida do sessionid
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Timeout de inatividade: 15 minutos (em segundos)
-# Após este período sem actividade, a sessão é invalidada
-SESSION_COOKIE_AGE = 900
-
-# Guarda a sessão a cada pedido para renovar o timeout com actividade real
-SESSION_SAVE_EVERY_REQUEST = True
-
-# Impede que o JS aceda ao cookie de sessão (protecção contra XSS)
-SESSION_COOKIE_HTTPONLY = True
-
-# Impede envio do cookie em contextos cross-site (protecção contra CSRF)
-SESSION_COOKIE_SAMESITE = 'Lax'
 
 # As linhas abaixo exigem HTTPS. Deixa comentadas em desenvolvimento local,
 # descomenta quando fizeres deploy num servidor com HTTPS.

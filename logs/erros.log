@@ -1,3 +1,6 @@
 [ERROR] 2026-05-06 02:45:11,095 views: DatabaseError ao criar matrícula | user=admin | erro=Pagamento não está regularizado!
 CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 
+[ERROR] 2026-05-08 11:08:40,252 views: DatabaseError ao confirmar matrícula | user=admin | erro=Pagamento não está regularizado!
+CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
+

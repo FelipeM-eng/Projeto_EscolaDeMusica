@@ -1,15 +1,16 @@
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.db import IntegrityError, DatabaseError   # ← estes dois são novos
+from django.db import IntegrityError, DatabaseError
 
-from .models import Matricula, Pagamento
-from .forms import MatriculaForm, PagamentoForm
+from .models import Matricula, Pagamento, Aluno, Curso, Turma
+from .forms import MatriculaForm, PagamentoForm, PagamentoEdicaoForm
 
-import logging
 logger = logging.getLogger('escola_musica')
 
 
@@ -18,20 +19,14 @@ logger = logging.getLogger('escola_musica')
 # ─────────────────────────────────────────
 
 def mainpage(request):
-    """Página principal pública."""
     return render(request, 'escola_musica/mainpage.html')
 
 
 def login_view(request):
-    """
-    GET  → apresenta formulário de login
-    POST → valida credenciais; em caso de falha dá feedback claro
-    """
     if request.user.is_authenticated:
         return redirect('matriculas_lista')
 
     form = AuthenticationForm(request, data=request.POST or None)
-
     form.fields['username'].widget.attrs.update({
         'placeholder': 'Nome de utilizador',
         'autocomplete': 'username',
@@ -41,43 +36,33 @@ def login_view(request):
         'autocomplete': 'current-password',
     })
 
-    if request.method == 'POST':
-        if form.is_valid():
-            login(request, form.get_user())
-            messages.success(
-                request,
-                f"Bem-vindo, {form.get_user().username}!"
-            )
-            return redirect('matriculas_lista')
-        else:
-            # Mensagem de erro clara sem revelar qual campo está errado
-            messages.error(
-                request,
-                "Credenciais inválidas. Verifica o utilizador e a palavra-passe."
-            )
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.get_user())
+        return redirect('matriculas_lista')
 
     return render(request, 'escola_musica/login.html', {'form': form})
 
 
 @require_POST
 def logout_view(request):
-    """
-    Termina sessão via POST (protegido por CSRF).
-    Limpa a sessão completamente antes de redirecionar.
-    """
-    username = request.user.username
     logout(request)
-    messages.info(request, f"Sessão de '{username}' terminada com sucesso.")
     return redirect('mainpage')
 
 
+
 # ─────────────────────────────────────────
-# ÁREA PROTEGIDA — Funcionalidade de negócio
+# ÁREA PROTEGIDA
 # ─────────────────────────────────────────
 
 @login_required
 def matriculas_lista(request):
-    """Lista todas as matrículas com dados relacionados."""
+    """
+    Lista matrículas.
+    Lê dados de pré-confirmação da session — se existirem,
+    abre a modal ANTES de guardar na BD.
+    """
+    pendente = request.session.get('matricula_pendente', None)
+
     matriculas = (
         Matricula.objects
         .select_related('id_aluno', 'id_curso', 'id_turma', 'id_pagamento')
@@ -85,12 +70,149 @@ def matriculas_lista(request):
     )
     return render(request, 'escola_musica/matriculas_lista.html', {
         'matriculas': matriculas,
+        'pendente':   pendente,
     })
 
 
 @login_required
+def matricula_nova(request):
+    """
+    GET  → formulário em branco
+    POST → valida TUDO no backend;
+           se válido, guarda dados em session e redireciona
+           para lista com modal de confirmação.
+           A BD NÃO é tocada ainda.
+    """
+    form_matricula = MatriculaForm(request.POST or None)
+    form_pagamento = PagamentoForm(request.POST or None)
+
+    if request.method == 'POST':
+        mat_valida = form_matricula.is_valid()
+        pag_valido = form_pagamento.is_valid()
+
+        if mat_valida and pag_valido:
+            # Recolhe os dados limpos para guardar em session
+            cd_m = form_matricula.cleaned_data
+            cd_p = form_pagamento.cleaned_data
+
+            aluno = cd_m['id_aluno']
+            curso = cd_m['id_curso']
+            turma = cd_m['id_turma']
+
+            # Guarda dados em session — ainda NÃO grava na BD
+            request.session['matricula_pendente'] = {
+                'aluno_id':       aluno.pk,
+                'aluno_nome':     aluno.nome,
+                'curso_id':       curso.pk,
+                'curso_nome':     curso.nome,
+                'turma_id':       turma.pk,
+                'turma_nome':     turma.nome_turma,
+                'data_matricula': cd_m['data_matricula'].isoformat()
+                                  if cd_m.get('data_matricula') else None,
+                'ano_letivo':     cd_m['ano_letivo'],
+                'data_pagamento': cd_p['data_pagamento'].isoformat()
+                                  if cd_p.get('data_pagamento') else None,
+                'valor_pago':     str(cd_p['valor_pago']),
+                'status':         cd_p['status'],
+            }
+            # Redireciona para a lista — a modal abre automaticamente
+            return redirect('matriculas_lista')
+
+    return render(request, 'escola_musica/matricula_nova.html', {
+        'form_matricula': form_matricula,
+        'form_pagamento': form_pagamento,
+    })
+
+@login_required
+def matricula_cancelar(request):
+    """
+    Limpa os dados pendentes da session sem gravar nada na BD.
+    Redireciona para o formulário de nova matrícula.
+    """
+    request.session.pop('matricula_pendente', None)
+    messages.info(request, "Matrícula cancelada. Podes preencher novamente.")
+    return redirect('matricula_nova')
+
+
+@login_required
+@require_POST
+def matricula_confirmar(request):
+    """
+    Chamado quando o utilizador clica CONFIRMAR na modal.
+    Lê os dados da session e grava efectivamente na BD.
+    Limpa a session após uso (sucesso ou erro).
+    """
+    pendente = request.session.pop('matricula_pendente', None)
+
+    if not pendente:
+        messages.error(request, "Não existe matrícula pendente de confirmação.")
+        return redirect('matriculas_lista')
+
+    try:
+        # Recupera os objectos da BD pelos IDs guardados em session
+        aluno = Aluno.objects.get(pk=pendente['aluno_id'])
+        curso = Curso.objects.get(pk=pendente['curso_id'])
+        turma = Turma.objects.get(pk=pendente['turma_id'])
+
+        # Cria o pagamento
+        pagamento = Pagamento.objects.create(
+            data_pagamento=pendente.get('data_pagamento'),
+            valor_pago=pendente['valor_pago'],
+            status=pendente['status'],
+        )
+
+        # Cria a matrícula
+        matricula = Matricula.objects.create(
+            id_aluno=aluno,
+            id_curso=curso,
+            id_turma=turma,
+            id_pagamento=pagamento,
+            data_matricula=pendente.get('data_matricula'),
+            ano_letivo=pendente.get('ano_letivo'),
+        )
+
+        messages.success(
+            request,
+            f"Matrícula #{matricula.id_matricula} registada com sucesso!"
+        )
+
+    except IntegrityError as e:
+        logger.error(
+            f"IntegrityError ao confirmar matrícula | "
+            f"user={request.user.username} | erro={e}"
+        )
+        messages.error(
+            request,
+            "Não foi possível registar: este aluno já está inscrito "
+            "neste curso e turma."
+        )
+
+    except DatabaseError as e:
+        logger.error(
+            f"DatabaseError ao confirmar matrícula | "
+            f"user={request.user.username} | erro={e}"
+        )
+        messages.error(
+            request,
+            "Não foi possível concluir a matrícula. "
+            "Verifica se o pagamento está regularizado."
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Erro inesperado ao confirmar matrícula | "
+            f"user={request.user.username} | erro={e}"
+        )
+        messages.error(
+            request,
+            "Ocorreu um erro inesperado. Contacta o administrador."
+        )
+
+    return redirect('matriculas_lista')
+
+
+@login_required
 def matricula_detalhe(request, pk):
-    """Detalhe completo de uma matrícula específica."""
     matricula = get_object_or_404(
         Matricula.objects.select_related(
             'id_aluno', 'id_curso', 'id_turma', 'id_pagamento'
@@ -103,97 +225,68 @@ def matricula_detalhe(request, pk):
 
 
 @login_required
-def matricula_nova(request):
-    """
-    GET  → formulário em branco
-    POST → valida, cria pagamento e matrícula com tratamento
-           de excepções estruturado por tipo.
-           Nenhuma mensagem técnica da BD é exposta ao utilizador.
-    """
-    form_matricula = MatriculaForm(request.POST or None)
-    form_pagamento = PagamentoForm(request.POST or None)
+def matricula_editar(request, pk):
+    matricula = get_object_or_404(Matricula, pk=pk)
+    pagamento = matricula.id_pagamento
+
+    form_matricula = MatriculaForm(
+        request.POST or None,
+        instance=matricula
+    )
+    form_pagamento = PagamentoEdicaoForm(
+        request.POST or None,
+        instance=pagamento
+    )
 
     if request.method == 'POST':
-        matricula_valida = form_matricula.is_valid()
-        pagamento_valido = form_pagamento.is_valid()
+        mat_valida = form_matricula.is_valid()
+        pag_valido = form_pagamento.is_valid()
 
-        if matricula_valida and pagamento_valido:
-            pagamento = None
+        if mat_valida and pag_valido:
             try:
-                # ── Passo 1: guardar o pagamento ──────────────────────────
-                pagamento = form_pagamento.save()
+                pag_actualizado = form_pagamento.save()
+                mat_actualizada = form_matricula.save(commit=False)
+                mat_actualizada.id_pagamento = pag_actualizado
+                mat_actualizada.save()
 
-                # ── Passo 2: associar e guardar a matrícula ───────────────
-                matricula = form_matricula.save(commit=False)
-                matricula.id_pagamento = pagamento
-                matricula.save()
-
-                # ── Sucesso ───────────────────────────────────────────────
                 messages.success(
                     request,
-                    f"Matrícula #{matricula.id_matricula} registada com sucesso!"
+                    f"Matrícula #{matricula.id_matricula} actualizada com sucesso."
                 )
-                return redirect('matriculas_lista')
+                return redirect('matricula_detalhe', pk=matricula.pk)
 
             except IntegrityError as e:
-                # Log interno com detalhe técnico completo
                 logger.error(
-                    "IntegrityError ao criar matrícula | "
+                    f"IntegrityError ao editar pk={pk} | "
                     f"user={request.user.username} | erro={e}"
                 )
-                _limpar_pagamento_orfao(pagamento)
-                # Mensagem sanitizada para o utilizador
                 messages.error(
                     request,
-                    "Não foi possível registar a matrícula: "
-                    "este aluno já pode estar inscrito neste curso e turma."
+                    "Já existe uma matrícula com este aluno, curso e turma."
                 )
 
             except DatabaseError as e:
-                # Captura erros de triggers PL/pgSQL — regista internamente
                 logger.error(
-                    "DatabaseError ao criar matrícula | "
+                    f"DatabaseError ao editar pk={pk} | "
                     f"user={request.user.username} | erro={e}"
                 )
-                _limpar_pagamento_orfao(pagamento)
                 messages.error(
                     request,
-                    "Não foi possível concluir a matrícula. "
-                    "Verifica se o pagamento está regularizado e tenta novamente."
+                    "Não foi possível actualizar. Tenta novamente."
                 )
 
             except Exception as e:
                 logger.error(
-                    "Erro inesperado ao criar matrícula | "
+                    f"Erro inesperado ao editar pk={pk} | "
                     f"user={request.user.username} | erro={e}"
                 )
-                _limpar_pagamento_orfao(pagamento)
-                messages.error(
-                    request,
-                    "Ocorreu um erro inesperado. "
-                    "Se o problema persistir, contacta o administrador."
-                )
+                messages.error(request, "Erro inesperado. Contacta o administrador.")
 
         else:
-            messages.warning(
-                request,
-                "Corrige os erros assinalados antes de submeter."
-            )
+            messages.warning(request, "Corrige os erros antes de guardar.")
 
-    return render(request, 'escola_musica/matricula_nova.html', {
+    return render(request, 'escola_musica/matricula_editar.html', {
         'form_matricula': form_matricula,
         'form_pagamento': form_pagamento,
+        'matricula':      matricula,
     })
-
-
-def _limpar_pagamento_orfao(pagamento):
-    """
-    Função auxiliar — remove o pagamento criado se a matrícula falhar.
-    Evita registos de pagamento órfãos na BD em caso de erro a meio.
-    Não propaga excepções — é chamada dentro de um bloco except.
-    """
-    if pagamento and pagamento.pk:
-        try:
-            pagamento.delete()
-        except Exception as e:
-            logger.error(f"Falha ao limpar pagamento órfão pk={pagamento.pk} | erro={e}")

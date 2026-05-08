@@ -1,73 +1,144 @@
 {% extends 'escola_musica/base.html' %}
+{% load static %}
 
 {% block titulo %}Matrículas — Escola de Música{% endblock %}
 
 {% block conteudo %}
 
-  <div class="pagina-cabecalho">
-    <div>
-      <h1 class="pagina-titulo">Matrículas</h1>
-      <p class="pagina-subtitulo">
-        {{ matriculas|length }} registo{{ matriculas|length|pluralize:",s" }} encontrado{{ matriculas|length|pluralize:",s" }}
-      </p>
-    </div>
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Matrículas</h1>
+    <p class="pagina-subtitulo">
+      {{ matriculas|length }}
+      registo{{ matriculas|length|pluralize:",s" }}
+      encontrado{{ matriculas|length|pluralize:",s" }}
+    </p>
+  </div>
+  <a href="{% url 'matricula_nova' %}" class="btn-primario">+ Nova matrícula</a>
+</div>
+
+{% if matriculas %}
+  <div class="tabela-wrapper">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Aluno</th>
+          <th>Curso</th>
+          <th>Turma</th>
+          <th>Ano letivo</th>
+          <th>Data</th>
+          <th class="th-acao">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in matriculas %}
+        <tr class="tabela__linha">
+          <td><span class="texto-suave">#{{ m.id_matricula }}</span></td>
+          <td><span class="aluno-nome">{{ m.id_aluno.nome }}</span></td>
+          <td>{{ m.id_curso.nome }}</td>
+          <td>{{ m.id_turma.nome_turma }}</td>
+          <td><span class="badge">{{ m.ano_letivo }}</span></td>
+          <td>
+            {% if m.data_matricula %}
+              {{ m.data_matricula|date:"d/m/Y" }}
+            {% else %}
+              <span class="texto-suave">—</span>
+            {% endif %}
+          </td>
+          <td class="acoes-celula">
+            <a href="{% url 'matricula_detalhe' m.pk %}" class="btn-ver">Ver</a>
+            <a href="{% url 'matricula_editar'  m.pk %}" class="btn-editar">Editar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="estado-vazio">
+    <div class="estado-vazio__icone">🎵</div>
+    <p class="estado-vazio__texto">Ainda não existem matrículas registadas.</p>
     <a href="{% url 'matricula_nova' %}" class="btn-primario">
-      + Nova matrícula
+      Registar primeira matrícula
     </a>
   </div>
+{% endif %}
 
-  {% if messages %}
-    {% for msg in messages %}
-      <div class="alerta alerta--{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+{% endblock %}
 
-  {% if matriculas %}
-    <div class="tabela-wrapper">
-      <table class="tabela">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Aluno</th>
-            <th>Curso</th>
-            <th>Turma</th>
-            <th>Ano letivo</th>
-            <th>Data de matrícula</th>
-            <th class="th-acao">Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for m in matriculas %}
-          <tr class="tabela__linha">
-            <td><span class="texto-suave">#{{ m.id_matricula }}</span></td>
-            <td><span class="aluno-nome">{{ m.id_aluno.nome }}</span></td>
-            <td>{{ m.id_curso.nome }}</td>
-            <td>{{ m.id_turma.nome_turma }}</td>
-            <td><span class="badge">{{ m.ano_letivo }}</span></td>
-            <td>
-              {% if m.data_matricula %}
-                {{ m.data_matricula|date:"d/m/Y" }}
-              {% else %}
-                <span class="texto-suave">—</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'matricula_detalhe' m.pk %}" class="btn-ver">Ver</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+{% block modal %}
+{% if pendente %}
+<!-- ── Modal de confirmação — dados ainda NÃO gravados na BD ── -->
+<div class="modal-overlay modal-overlay--visivel"
+     id="modal-confirmacao"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-titulo">
+  <div class="modal">
+
+    <div class="modal__cabecalho">
+      <div class="modal__icone-alerta">⚠</div>
+      <h2 class="modal__titulo" id="modal-titulo">Confirmar Matrícula</h2>
+      <p class="modal__subtitulo">
+        Verifica os dados antes de confirmar. A matrícula só é registada
+        depois de clicar em <strong>Confirmar</strong>.
+      </p>
     </div>
 
-  {% else %}
-    <div class="estado-vazio">
-      <div class="estado-vazio__icone">🎵</div>
-      <p class="estado-vazio__texto">Ainda não existem matrículas registadas.</p>
-      <a href="{% url 'matricula_nova' %}" class="btn-primario">
-        Registar primeira matrícula
+    <div class="modal__corpo">
+      <dl class="modal__lista">
+        <dt>Aluno</dt>
+        <dd>{{ pendente.aluno_nome }}</dd>
+
+        <dt>Curso</dt>
+        <dd>{{ pendente.curso_nome }}</dd>
+
+        <dt>Turma</dt>
+        <dd>{{ pendente.turma_nome }}</dd>
+
+        <dt>Ano letivo</dt>
+        <dd>{{ pendente.ano_letivo }}</dd>
+
+        <dt>Data de matrícula</dt>
+        <dd>
+          {% if pendente.data_matricula %}
+            {{ pendente.data_matricula }}
+          {% else %}—{% endif %}
+        </dd>
+
+        <dt>Valor pago</dt>
+        <dd>{{ pendente.valor_pago }} €</dd>
+
+        <dt>Estado pagamento</dt>
+        <dd>
+          <span class="badge badge--{{ pendente.status|lower }}">
+            {{ pendente.status }}
+          </span>
+        </dd>
+      </dl>
+    </div>
+
+    <div class="modal__rodape">
+      <!-- Cancelar — limpa a session e fecha a modal -->
+      <a href="{% url 'matricula_cancelar_pendente' %}"
+         class="btn-secundario">
+        Cancelar
       </a>
-    </div>
-  {% endif %}
 
+      <!-- Confirmar — POST que grava na BD -->
+      <form method="POST"
+            action="{% url 'matricula_confirmar' %}"
+            id="form-confirmar">
+        {% csrf_token %}
+        <button type="submit" class="btn-primario" id="btn-confirmar">
+          Confirmar matrícula
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endif %}
 {% endblock %}
