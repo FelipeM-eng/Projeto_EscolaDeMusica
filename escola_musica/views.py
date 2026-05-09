@@ -28,12 +28,14 @@ def login_view(request):
 
     form = AuthenticationForm(request, data=request.POST or None)
     form.fields['username'].widget.attrs.update({
-        'placeholder': 'Nome de utilizador',
+        'placeholder':  'Nome de utilizador',
         'autocomplete': 'username',
+        'class':        'campo-input',    # ← garante que esta linha existe
     })
     form.fields['password'].widget.attrs.update({
-        'placeholder': '••••••••',
+        'placeholder':  '••••••••',
         'autocomplete': 'current-password',
+        'class':        'campo-input',    # ← garante que esta linha existe
     })
 
     if request.method == 'POST' and form.is_valid():

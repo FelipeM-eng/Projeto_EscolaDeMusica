@@ -5,8 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block titulo %}Escola de Música{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'escola_musica/css/estilos.css' %}">
-  {% block estilos_extra %}{% endblock %}
+
+  <!-- CSS global — sempre carregado -->
+  <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+
+  <!-- CSS específico da página -->
+  {% block css_extra %}{% endblock %}
 </head>
 <body class="pagina-protegida">
 
@@ -34,14 +38,16 @@
         {% endfor %}
       </div>
     {% endif %}
-
     {% block conteudo %}{% endblock %}
   </main>
 
-  <!-- Bloco de modais — renderizado fora do <main> para overlay correcto -->
   {% block modal %}{% endblock %}
 
-  <script src="{% static 'escola_musica/js/matriculas.js' %}"></script>
-  {% block scripts_extra %}{% endblock %}
+  <!-- JS global — sempre carregado -->
+  <script src="{% static 'escola_musica/js/base.js' %}"></script>
+
+  <!-- JS específico da página -->
+  {% block js_extra %}{% endblock %}
+
 </body>
 </html>

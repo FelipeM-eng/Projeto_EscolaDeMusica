@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════
+   MODAL — janela flutuante de confirmação
+   Carregado em matriculas_lista.html
+═══════════════════════════════════════════════ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.modal-overlay--visivel {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: #12121a;
+  border: 1px solid var(--cor-borda);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7);
+  transform: translateY(24px) scale(0.98);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay--visivel .modal {
+  transform: translateY(0) scale(1);
+}
+
+.modal__cabecalho {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.12),
+    rgba(123, 79, 166, 0.08)
+  );
+  padding: 1.75rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.modal__icone-alerta {
+  width: 52px;
+  height: 52px;
+  background: rgba(240, 180, 0, 0.15);
+  border: 2px solid rgba(240, 180, 0, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #f0c040;
+  margin: 0 auto 1rem;
+}
+
+.modal__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1.3rem;
+  color: var(--cor-primaria);
+  margin-bottom: 0.4rem;
+}
+
+.modal__subtitulo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.5;
+}
+
+.modal__subtitulo strong { color: var(--cor-primaria); }
+
+.modal__corpo { padding: 1.5rem 2rem; }
+
+.modal__lista {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.65rem 1rem;
+}
+
+.modal__lista dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cor-texto-suave);
+  display: flex;
+  align-items: center;
+}
+
+.modal__lista dd {
+  font-size: 0.93rem;
+  color: var(--cor-texto);
+  display: flex;
+  align-items: center;
+}
+
+.modal__rodape {
+  padding: 1.25rem 2rem 1.75rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid var(--cor-borda);
+  flex-wrap: wrap;
+}

@@ -1,7 +1,13 @@
 {% extends 'escola_musica/base.html' %}
 {% load static %}
 
+
 {% block titulo %}Matrículas — Escola de Música{% endblock %}
+
+{% block css_extra %}
+  <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/modal.css' %}">
+{% endblock %}
 
 {% block conteudo %}
 
@@ -146,4 +152,9 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block js_extra %}
+  <script src="{% static 'escola_musica/js/modal.js' %}"></script>
+  <script src="{% static 'escola_musica/js/formularios.js' %}"></script>
 {% endblock %}

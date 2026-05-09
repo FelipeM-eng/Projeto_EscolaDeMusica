@@ -1,0 +1,140 @@
+/* ═══════════════════════════════════════════════
+   LOGIN — caixa de autenticação
+═══════════════════════════════════════════════ */
+
+.login-pagina {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(123, 79, 166, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 30%, rgba(201, 168, 76, 0.10) 0%, transparent 50%),
+    #0a0a0f;
+}
+
+.login-caixa {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--cor-borda);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--sombra);
+}
+
+.login-caixa__icone {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.login-caixa__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1.6rem;
+  color: var(--cor-primaria);
+  text-align: center;
+  margin-bottom: 0.3rem;
+}
+
+.login-caixa__subtitulo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* ── Todos os inputs dentro da caixa de login ── */
+.login-caixa input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto) !important;
+  font-size: 0.95rem;
+  font-family: var(--fonte-corpo);
+  outline: none;
+  display: block;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-caixa input:focus {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+}
+
+.login-caixa input::placeholder {
+  color: rgba(160, 152, 128, 0.5);
+}
+
+/* Corrige fundo branco do autocomplete do Chrome */
+.login-caixa input:-webkit-autofill,
+.login-caixa input:-webkit-autofill:hover,
+.login-caixa input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #111118 inset !important;
+  -webkit-text-fill-color: var(--cor-texto) !important;
+  border-color: var(--cor-borda);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Labels ── */
+.login-caixa label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+/* ── Erros ── */
+.erros {
+  background: rgba(220, 50, 50, 0.1);
+  border: 1px solid rgba(220, 50, 50, 0.3);
+  border-radius: var(--raio);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #f08080;
+}
+
+/* ── Botão entrar ── */
+.btn-entrar {
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, var(--cor-primaria), #a07830);
+  border: none;
+  border-radius: var(--raio);
+  color: var(--cor-fundo);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.btn-entrar:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ── Link voltar ── */
+.login-voltar {
+  display: block;
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.login-voltar:hover {
+  color: var(--cor-primaria);
+}
