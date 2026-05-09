@@ -1,0 +1,245 @@
+/* ═══════════════════════════════════════════════
+   MATRÍCULAS — tabela, detalhe, eliminar
+   Carregado em matriculas_lista, detalhe, eliminar
+═══════════════════════════════════════════════ */
+
+/* ── Tabela ── */
+.tabela-wrapper {
+  overflow-x: auto;
+  border-radius: var(--raio);
+  border: 1px solid var(--cor-borda);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.tabela thead {
+  background: rgba(201, 168, 76, 0.08);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tabela th {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+  white-space: nowrap;
+}
+
+.tabela td {
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--cor-texto);
+  vertical-align: middle;
+}
+
+.tabela__linha:last-child td { border-bottom: none; }
+.tabela__linha:hover { background: rgba(255, 255, 255, 0.03); }
+.th-acao { text-align: center; }
+
+.aluno-nome {
+  font-weight: 600;
+  color: var(--cor-secundaria);
+}
+
+/* ── Botões de acção na tabela ── */
+.acoes-celula { white-space: nowrap; }
+
+.btn-ver {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-ver:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+.btn-editar {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(123, 79, 166, 0.4);
+  border-radius: 50px;
+  color: rgba(180, 140, 220, 0.9);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-left: 0.4rem;
+}
+
+.btn-editar:hover {
+  border-color: var(--cor-acento);
+  color: #c89eff;
+  background: rgba(123, 79, 166, 0.1);
+}
+
+.btn-eliminar {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(220, 50, 50, 0.35);
+  border-radius: 50px;
+  color: rgba(240, 128, 128, 0.85);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-left: 0.4rem;
+}
+
+.btn-eliminar:hover {
+  background: rgba(220, 50, 50, 0.12);
+  border-color: #f08080;
+  color: #f08080;
+}
+
+/* ── Estado vazio ── */
+.estado-vazio {
+  text-align: center;
+  padding: 4rem 2rem;
+  border: 1px dashed var(--cor-borda);
+  border-radius: var(--raio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.estado-vazio__icone {
+  font-size: 3rem;
+  opacity: 0.4;
+}
+
+.estado-vazio__texto {
+  color: var(--cor-texto-suave);
+  font-size: 0.95rem;
+}
+
+/* ── Detalhe de matrícula ── */
+.detalhe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.detalhe-card {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 1.5rem;
+}
+
+.detalhe-card__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  color: var(--cor-primaria);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.detalhe-lista {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+}
+
+.detalhe-lista dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cor-texto-suave);
+  padding-top: 0.1rem;
+}
+
+.detalhe-lista dd {
+  font-size: 0.92rem;
+  color: var(--cor-texto);
+}
+
+/* ── Página de eliminação ── */
+.eliminar-card {
+  background: var(--cor-superficie);
+  border: 1px solid rgba(220, 50, 50, 0.25);
+  border-radius: var(--raio);
+  overflow: hidden;
+  max-width: 640px;
+}
+
+.eliminar-card__aviso {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  padding: 1.75rem 2rem;
+  background: rgba(220, 50, 50, 0.06);
+  border-bottom: 1px solid rgba(220, 50, 50, 0.15);
+}
+
+.eliminar-card__icone {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.eliminar-card__titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  margin-bottom: 0.4rem;
+}
+
+.eliminar-card__descricao {
+  font-size: 0.88rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.5;
+}
+
+.eliminar-card__dados {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.eliminar-card__acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-eliminar-confirmar {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1.5rem;
+  background: rgba(220, 50, 50, 0.15);
+  border: 1.5px solid rgba(220, 50, 50, 0.5);
+  border-radius: 50px;
+  color: #f08080;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-eliminar-confirmar:hover {
+  background: rgba(220, 50, 50, 0.25);
+  border-color: #f08080;
+  color: #fff;
+}

@@ -1,0 +1,154 @@
+/* ═══════════════════════════════════════════════
+   FORMULÁRIOS — inputs, validação, selects
+   Carregado em matricula_nova.html e matricula_editar.html
+═══════════════════════════════════════════════ */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.form-secao {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 1.75rem;
+}
+
+.form-secao__titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
+  color: var(--cor-primaria);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.form-grupo {
+  margin-bottom: 1.2rem;
+}
+
+.form-grupo label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.4rem;
+}
+
+.form-grupo input,
+.form-grupo select {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto);
+  font-size: 0.92rem;
+  font-family: var(--fonte-corpo);
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-grupo input:focus,
+.form-grupo select:focus {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+}
+
+.form-grupo input::placeholder {
+  color: rgba(160, 152, 128, 0.5);
+}
+
+.form-grupo select option {
+  background: #1a1a2e;
+  color: var(--cor-texto);
+}
+
+/* ── Select com seta personalizada ── */
+.form-grupo select.campo-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a09880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.form-grupo select.campo-input option[value=""] {
+  color: rgba(160, 152, 128, 0.6);
+}
+
+/* ── Estados de validação ── */
+.form-grupo--erro input,
+.form-grupo--erro select,
+.form-grupo--erro .campo-input {
+  border-color: rgba(220, 50, 50, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(220, 50, 50, 0.12) !important;
+}
+
+.form-grupo input:valid:not(:placeholder-shown),
+.form-grupo select:valid {
+  border-color: rgba(50, 200, 100, 0.4);
+}
+
+/* ── Mensagem de erro com ícone ── */
+.form-erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: #f08080;
+  line-height: 1.4;
+  animation: entrar-erro 0.2s ease;
+}
+
+@keyframes entrar-erro {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.form-erro__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  background: rgba(220, 50, 50, 0.25);
+  border-radius: 50%;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Campo obrigatório ── */
+.obrigatorio {
+  color: #f08080;
+  margin-left: 0.2rem;
+  font-weight: 700;
+}
+
+/* ── Acções e nota do formulário ── */
+.form-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-nota {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  max-width: 400px;
+  line-height: 1.5;
+  margin-right: auto;
+}

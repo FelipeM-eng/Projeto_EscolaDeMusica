@@ -1,0 +1,267 @@
+/* ═══════════════════════════════════════════════
+   BASE — Variáveis, reset, componentes globais
+   Carregado em TODAS as páginas via base.html
+═══════════════════════════════════════════════ */
+
+/* ── Variáveis de cor e tipografia ── */
+:root {
+  --cor-fundo:       #0a0a0f;
+  --cor-primaria:    #c9a84c;
+  --cor-secundaria:  #e8d5a3;
+  --cor-acento:      #7b4fa6;
+  --cor-acento2:     #4f8fa6;
+  --cor-texto:       #f0ece4;
+  --cor-texto-suave: #a09880;
+  --cor-superficie:  rgba(255, 255, 255, 0.04);
+  --cor-borda:       rgba(201, 168, 76, 0.2);
+  --fonte-titulo:    'Georgia', serif;
+  --fonte-corpo:     'Segoe UI', system-ui, sans-serif;
+  --raio:            12px;
+  --sombra:          0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Reset base ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fonte-corpo);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Utilitários globais ── */
+.texto-suave {
+  color: var(--cor-texto-suave);
+}
+
+/* ── Badges de estado ── */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: var(--cor-primaria);
+  font-weight: 600;
+}
+
+.badge--pago {
+  background: rgba(50, 200, 100, 0.15);
+  color: #6fcf97;
+  border-color: rgba(50, 200, 100, 0.3);
+}
+
+.badge--pendente {
+  background: rgba(240, 180, 0, 0.15);
+  color: #f0c040;
+  border-color: rgba(240, 180, 0, 0.3);
+}
+
+.badge--cancelado {
+  background: rgba(220, 50, 50, 0.12);
+  color: #f08080;
+  border-color: rgba(220, 50, 50, 0.3);
+}
+
+/* ── Navbar (páginas protegidas) ── */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2.5rem;
+  background: rgba(10, 10, 15, 0.95);
+  border-bottom: 1px solid var(--cor-borda);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.navbar__logo {
+  font-family: var(--fonte-titulo);
+  color: var(--cor-primaria);
+  font-size: 1.1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar__utilizador {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+}
+
+.btn-logout {
+  padding: 0.4rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(220, 50, 50, 0.4);
+  border-radius: 50px;
+  color: #f08080;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(220, 50, 50, 0.15);
+  border-color: #f08080;
+}
+
+/* ── Layout das páginas protegidas ── */
+.pagina-protegida {
+  background-color: var(--cor-fundo);
+  min-height: 100vh;
+}
+
+.conteudo {
+  max-width: 1100px;
+  margin: 2.5rem auto;
+  padding: 0 2rem;
+}
+
+.pagina-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagina-titulo {
+  font-family: var(--fonte-titulo);
+  font-size: 1.8rem;
+  color: var(--cor-primaria);
+  margin-bottom: 0.3rem;
+}
+
+.pagina-subtitulo {
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 2rem;
+}
+
+/* ── Botões globais ── */
+.btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.4rem;
+  background: linear-gradient(135deg, var(--cor-primaria), #a07830);
+  border: none;
+  border-radius: 50px;
+  color: var(--cor-fundo);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primario:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btn-grande {
+  padding: 0.85rem 2.5rem;
+  font-size: 1rem;
+}
+
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: 50px;
+  color: var(--cor-texto-suave);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-secundario:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+/* ── Alertas / Mensagens globais ── */
+.mensagens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.alerta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.2rem;
+  border-radius: var(--raio);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.alerta--success {
+  background: rgba(50, 200, 100, 0.12);
+  border-color: rgba(50, 200, 100, 0.3);
+  color: #6fcf97;
+}
+
+.alerta--error,
+.alerta--danger {
+  background: rgba(220, 50, 50, 0.1);
+  border-color: rgba(220, 50, 50, 0.3);
+  color: #f08080;
+}
+
+.alerta--warning {
+  background: rgba(240, 180, 0, 0.1);
+  border-color: rgba(240, 180, 0, 0.3);
+  color: #f0c040;
+}
+
+.alerta--info {
+  background: rgba(79, 143, 166, 0.12);
+  border-color: rgba(79, 143, 166, 0.3);
+  color: #7ecfea;
+}
+
+.alerta__texto { flex: 1; }
+
+.alerta__fechar {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+  opacity: 0.6;
+  line-height: 1;
+  padding: 0 0.2rem;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.alerta__fechar:hover { opacity: 1; }

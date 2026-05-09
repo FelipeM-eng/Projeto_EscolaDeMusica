@@ -3,6 +3,10 @@
 
 {% block titulo %}Nova Matrícula — Escola de Música{% endblock %}
 
+{% block css_extra %}
+  <link rel="stylesheet" href="{% static 'escola_musica/css/formularios.css' %}">
+{% endblock %}
+
 {% block conteudo %}
 
 <div class="pagina-cabecalho">
@@ -86,4 +90,8 @@
 
 </form>
 
+{% endblock %}
+
+{% block js_extra %}
+  <script src="{% static 'escola_musica/js/formularios.js' %}"></script>
 {% endblock %}

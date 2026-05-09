@@ -6,56 +6,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrar — Escola de Música</title>
-  <link rel="stylesheet" href="{% static 'escola_musica/css/estilos.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/login.css' %}">
 </head>
 <body>
 
-<div class="login-pagina">
+  <div class="login-pagina">
 
-  <div class="login-caixa">
+    <div class="login-caixa">
 
-    <div class="login-caixa__icone">🎵</div>
-    <h1 class="login-caixa__titulo">Área Reservada</h1>
-    <p class="login-caixa__subtitulo">Introduz as tuas credenciais para aceder</p>
+      <div class="login-caixa__icone">🎵</div>
+      <h1 class="login-caixa__titulo">Área Reservada</h1>
+      <p class="login-caixa__subtitulo">Introduz as tuas credenciais para aceder</p>
 
-    <!-- Erros de autenticação -->
-    {% if form.non_field_errors %}
-      <div class="erros" role="alert">
-        {% for erro in form.non_field_errors %}
-          <p>{{ erro }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
+      <!-- Erros de autenticação -->
+      {% if form.non_field_errors %}
+        <div class="erros" role="alert">
+          {% for erro in form.non_field_errors %}
+            <p>{{ erro }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
 
-    <!-- Formulário de login -->
-    <form id="form-login" method="POST" action="{% url 'login' %}" novalidate>
-      {% csrf_token %}
+      <!-- Formulário de login -->
+      <form id="form-login" method="POST" action="{% url 'login' %}" novalidate>
+        {% csrf_token %}
 
-      <div class="form-grupo">
-        <label for="{{ form.username.id_for_label }}">Utilizador</label>
-        {{ form.username }}
-        {% if form.username.errors %}
-          <div class="erros">{{ form.username.errors }}</div>
-        {% endif %}
-      </div>
+        <div class="form-grupo">
+          <label for="{{ form.username.id_for_label }}">Utilizador</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="erros">{{ form.username.errors }}</div>
+          {% endif %}
+        </div>
 
-      <div class="form-grupo">
-        <label for="{{ form.password.id_for_label }}">Palavra-passe</label>
-        {{ form.password }}
-        {% if form.password.errors %}
-          <div class="erros">{{ form.password.errors }}</div>
-        {% endif %}
-      </div>
+        <div class="form-grupo">
+          <label for="{{ form.password.id_for_label }}">Palavra-passe</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="erros">{{ form.password.errors }}</div>
+          {% endif %}
+        </div>
 
-      <button type="submit" class="btn-entrar">Entrar</button>
-    </form>
+        <button type="submit" class="btn-entrar">Entrar</button>
+      </form>
 
-    <a href="{% url 'mainpage' %}" class="login-voltar">← Voltar à página principal</a>
+      <a href="{% url 'mainpage' %}" class="login-voltar">← Voltar à página principal</a>
+
+    </div>
 
   </div>
 
-</div>
-
-<script src="{% static 'escola_musica/js/matriculas.js' %}"></script>
+  <script src="{% static 'escola_musica/js/base.js' %}"></script>
 </body>
 </html>
