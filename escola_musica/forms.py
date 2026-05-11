@@ -2,6 +2,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import datetime
+import re
+import unicodedata
 
 from .models import Matricula, Pagamento, Aluno, Curso, Turma
 
@@ -236,17 +238,67 @@ class PagamentoEdicaoForm(PagamentoForm):
 # ─────────────────────────────────────────────────────────────
 # FORMULÁRIO DE MATRÍCULA
 # ─────────────────────────────────────────────────────────────
+# ── Constantes de validação do nome ──────────────────────────
+# Permite letras (incluindo acentuadas), espaços, hífens e apóstrofos
+# Bloqueia qualquer outro caracter — SQL, HTML, scripts, etc.
+REGEX_NOME_VALIDO = re.compile(
+    r"^[\w\s\-\'À-ÖØ-öø-ÿ]+$",
+    re.UNICODE
+)
+NOME_MIN_CHARS = 2
+NOME_MAX_CHARS = 100
+
+
+def _sanitizar_nome(valor):
+    """
+    Sanitiza e normaliza um nome de aluno.
+    1. Remove espaços no início e no fim
+    2. Colapsa espaços duplicados internos
+    3. Normaliza unicode (NFC) — evita representações duplas do mesmo caracter
+    4. Capitaliza cada palavra (João silva → João Silva)
+    """
+    if not valor:
+        return valor
+    # Normaliza unicode
+    valor = unicodedata.normalize('NFC', valor)
+    # Remove espaços extra
+    valor = ' '.join(valor.split())
+    # Capitaliza
+    valor = valor.title()
+    return valor
+
 
 class MatriculaForm(forms.ModelForm):
+    """
+    Formulário de matrícula com campo de texto livre para o aluno.
+    O aluno é procurado ou criado na view após validação deste form.
+    """
+
+    # Campo de texto livre em vez de ForeignKey select
+    nome_aluno = forms.CharField(
+        label='Aluno',
+        max_length=NOME_MAX_CHARS,
+        min_length=NOME_MIN_CHARS,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class':       'campo-input',
+            'placeholder': 'Nome completo do aluno',
+            'autocomplete': 'off',
+            'required':    True,
+            'maxlength':   str(NOME_MAX_CHARS),
+        }),
+        error_messages={
+            'required':   'O nome do aluno é obrigatório.',
+            'min_length': f'O nome deve ter pelo menos {NOME_MIN_CHARS} caracteres.',
+            'max_length': f'O nome não pode ter mais de {NOME_MAX_CHARS} caracteres.',
+        },
+    )
 
     class Meta:
         model  = Matricula
-        fields = [
-            'id_aluno', 'id_curso', 'id_turma',
-            'data_matricula', 'ano_letivo',
-        ]
+        # id_aluno é tratado manualmente na view — não incluir aqui
+        fields = ['id_curso', 'id_turma', 'data_matricula', 'ano_letivo']
         widgets = {
-            'id_aluno': forms.Select(attrs={'class': 'campo-input'}),
             'id_curso': forms.Select(attrs={'class': 'campo-input'}),
             'id_turma': forms.Select(attrs={'class': 'campo-input'}),
             'data_matricula': forms.DateInput(
@@ -256,7 +308,6 @@ class MatriculaForm(forms.ModelForm):
                     'max':      _data_maxima_matricula().isoformat(),
                     'class':    'campo-input',
                     'required': True,
-                    # ID usado pelo JS para preencher o ano letivo
                     'id':       'id_data_matricula',
                 },
                 format='%Y-%m-%d'
@@ -269,22 +320,17 @@ class MatriculaForm(forms.ModelForm):
                     'step':        '1',
                     'class':       'campo-input',
                     'required':    True,
-                    # ID usado pelo JS para preenchimento automático
                     'id':          'id_ano_letivo',
                 }
             ),
         }
         labels = {
-            'id_aluno':       'Aluno',
             'id_curso':       'Curso',
             'id_turma':       'Turma',
             'data_matricula': 'Data de matrícula',
             'ano_letivo':     'Ano letivo',
         }
         error_messages = {
-            'id_aluno': {
-                'required': 'Seleciona o aluno a matricular.',
-            },
             'id_curso': {
                 'required': 'Seleciona o curso pretendido.',
             },
@@ -303,21 +349,59 @@ class MatriculaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['id_aluno'].queryset    = Aluno.objects.order_by('nome')
         self.fields['id_curso'].queryset    = Curso.objects.order_by('nome')
         self.fields['id_turma'].queryset    = Turma.objects.order_by('nome_turma')
-        self.fields['id_aluno'].empty_label = '— Seleciona o aluno —'
         self.fields['id_curso'].empty_label = '— Seleciona o curso —'
         self.fields['id_turma'].empty_label = '— Seleciona a turma —'
         for field in self.fields.values():
             field.required = True
         _aplicar_atributos(self.fields)
 
-    def clean_id_aluno(self):
-        aluno = self.cleaned_data.get('id_aluno')
-        if not aluno:
-            raise ValidationError("Seleciona o aluno a matricular.")
-        return aluno
+    # ── Validação e sanitização do nome do aluno ──────────────
+
+    def clean_nome_aluno(self):
+        """
+        Validação completa do nome do aluno.
+        - Sanitiza (normaliza unicode, colapsa espaços, capitaliza)
+        - Valida tamanho
+        - Valida caracteres permitidos (bloqueia scripts, SQL, HTML)
+        - Proteção XSS: o Django templates fazem auto-escape,
+          mas validamos aqui para rejeitar na entrada
+        """
+        valor = self.cleaned_data.get('nome_aluno', '')
+
+        if not valor or not valor.strip():
+            raise ValidationError("O nome do aluno é obrigatório.")
+
+        # Sanitiza primeiro
+        valor = _sanitizar_nome(valor)
+
+        # Tamanho mínimo após sanitização
+        if len(valor) < NOME_MIN_CHARS:
+            raise ValidationError(
+                f"O nome deve ter pelo menos {NOME_MIN_CHARS} caracteres."
+            )
+
+        # Valida caracteres — bloqueia HTML, SQL, scripts, etc.
+        if not REGEX_NOME_VALIDO.match(valor):
+            raise ValidationError(
+                "O nome contém caracteres inválidos. "
+                "Apenas letras, espaços, hífens e apóstrofos são permitidos."
+            )
+
+        # Bloqueia padrões típicos de injecção (camada extra de defesa)
+        padroes_bloqueados = [
+            '<', '>', '{', '}', '[', ']', '(', ')',
+            ';', '=', '/', '\\', '@', '#', '$', '%',
+            '*', '|', '&', '^', '~', '`',
+        ]
+        for char in padroes_bloqueados:
+            if char in valor:
+                raise ValidationError(
+                    f"O nome contém o caracter inválido '{char}'."
+                )
+
+        return valor
 
     def clean_id_curso(self):
         curso = self.cleaned_data.get('id_curso')
@@ -332,29 +416,22 @@ class MatriculaForm(forms.ModelForm):
         return turma
 
     def clean_data_matricula(self):
-        data  = self.cleaned_data.get('data_matricula')
-        hoje  = timezone.now().date()
+        data   = self.cleaned_data.get('data_matricula')
+        hoje   = timezone.now().date()
         maxima = _data_maxima_matricula()
-
         if not data:
             raise ValidationError("A data de matrícula é obrigatória.")
-
         _validar_data_minima(data, "Data de matrícula")
-
-        # Não pode ser anterior a hoje
         if data < hoje:
             raise ValidationError(
-                "A data de matrícula não pode ser anterior a hoje "
+                f"A data de matrícula não pode ser anterior a hoje "
                 f"({hoje.strftime('%d/%m/%Y')})."
             )
-
-        # Máximo 2 meses no futuro
         if data > maxima:
             raise ValidationError(
-                "A data de matrícula não pode ser superior a 2 meses "
+                f"A data de matrícula não pode ser superior a 2 meses "
                 f"a partir de hoje (máximo: {maxima.strftime('%d/%m/%Y')})."
             )
-
         return data
 
     def clean_ano_letivo(self):
@@ -362,47 +439,28 @@ class MatriculaForm(forms.ModelForm):
         if ano is None:
             raise ValidationError("O ano letivo é obrigatório.")
         if ano < 1900:
-            raise ValidationError(
-                "O ano letivo não pode ser anterior a 1900."
-            )
+            raise ValidationError("O ano letivo não pode ser anterior a 1900.")
         if ano > 2100:
-            raise ValidationError(
-                "O ano letivo não pode ser superior a 2100."
-            )
+            raise ValidationError("O ano letivo não pode ser superior a 2100.")
         return ano
 
     def clean(self):
-        """Validações cruzadas entre campos."""
+        """
+        Validação cruzada de duplicados.
+        Nota: id_aluno não está aqui — é resolvido na view.
+        A verificação de duplicado com o aluno real é feita na view
+        após procurar/criar o aluno.
+        """
         cleaned = super().clean()
-        aluno   = cleaned.get('id_aluno')
-        curso   = cleaned.get('id_curso')
-        turma   = cleaned.get('id_turma')
-        data    = cleaned.get('data_matricula')
+        curso = cleaned.get('id_curso')
+        turma = cleaned.get('id_turma')
 
-        # Regra: data de matrícula >= data de nascimento do aluno
-        if aluno and data and aluno.data_nascimento:
-            if data < aluno.data_nascimento:
+        # Valida que a turma pertence ao curso seleccionado
+        if curso and turma:
+            if turma.id_curso and turma.id_curso != curso:
                 self.add_error(
-                    'data_matricula',
-                    f"A data de matrícula ({data.strftime('%d/%m/%Y')}) "
-                    f"não pode ser anterior à data de nascimento do aluno "
-                    f"({aluno.data_nascimento.strftime('%d/%m/%Y')})."
+                    'id_turma',
+                    f"A turma '{turma.nome_turma}' não pertence "
+                    f"ao curso '{curso.nome}'."
                 )
-
-        # Regra: sem matrículas duplicadas
-        if aluno and curso and turma:
-            qs = Matricula.objects.filter(
-                id_aluno=aluno,
-                id_curso=curso,
-                id_turma=turma,
-            )
-            if self.instance and self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
-                raise ValidationError(
-                    f"O aluno '{aluno.nome}' já está matriculado "
-                    f"no curso '{curso.nome}' / turma '{turma.nome_turma}'. "
-                    "Não é possível criar uma matrícula duplicada."
-                )
-
         return cleaned

@@ -101,7 +101,12 @@
     <div class="modal__corpo">
       <dl class="modal__lista">
         <dt>Aluno</dt>
-        <dd>{{ pendente.aluno_nome }}</dd>
+        <dd>
+          {{ pendente.aluno_nome }}
+          {% if pendente.aluno_criado %}
+            <span class="badge-novo">novo</span>
+          {% endif %}
+        </dd>
 
         <dt>Curso</dt>
         <dd>{{ pendente.curso_nome }}</dd>

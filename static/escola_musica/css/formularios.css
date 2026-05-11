@@ -152,3 +152,19 @@
   line-height: 1.5;
   margin-right: auto;
 }
+
+/* ── Badge "novo" na modal ── */
+.badge-novo {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: rgba(79, 143, 166, 0.15);
+  border: 1px solid rgba(79, 143, 166, 0.4);
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7ecfea;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
