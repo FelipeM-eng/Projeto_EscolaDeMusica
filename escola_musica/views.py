@@ -75,16 +75,15 @@ def matriculas_lista(request):
 @login_required
 def matricula_nova(request):
     """
-    GET  → formulário em branco
-    POST → valida TUDO no backend;
-           se válido, guarda dados em session e redireciona
-           para lista com modal de confirmação.
-           A BD NÃO é tocada ainda.
+    GET  → formulário com campo de texto para nome do aluno
+    POST → valida, procura ou cria o aluno, guarda em session,
+           redireciona para confirmação na modal.
+           A BD NÃO é tocada ainda (excepto eventual criação de Aluno).
     """
     form_matricula = MatriculaForm(request.POST or None)
     form_pagamento = PagamentoForm(
         request.POST or None,
-        utilizador=request.user      # ← passa utilizador para validação de retroactividade
+        utilizador=request.user
     )
 
     if request.method == 'POST':
@@ -92,32 +91,67 @@ def matricula_nova(request):
         pag_valido = form_pagamento.is_valid()
 
         if mat_valida and pag_valido:
-            # Recolhe os dados limpos para guardar em session
-            cd_m = form_matricula.cleaned_data
-            cd_p = form_pagamento.cleaned_data
+            cd_m       = form_matricula.cleaned_data
+            cd_p       = form_pagamento.cleaned_data
+            nome_aluno = cd_m['nome_aluno']  # já sanitizado pelo form
+            curso      = cd_m['id_curso']
+            turma      = cd_m['id_turma']
 
-            aluno = cd_m['id_aluno']
-            curso = cd_m['id_curso']
-            turma = cd_m['id_turma']
+            # ── Procura ou cria o aluno ───────────────────────────────
+            # Usa iexact para comparação case-insensitive
+            # get_or_create com ORM — nunca SQL manual (S3)
+            try:
+                aluno, criado = Aluno.objects.get_or_create(
+                    nome__iexact=nome_aluno,
+                    defaults={'nome': nome_aluno}
+                )
+            except Aluno.MultipleObjectsReturned:
+                # Se existir mais do que um aluno com o mesmo nome,
+                # usa o primeiro por ordem de ID
+                aluno  = Aluno.objects.filter(
+                    nome__iexact=nome_aluno
+                ).order_by('id_aluno').first()
+                criado = False
 
-            # Guarda dados em session — ainda NÃO grava na BD
-            request.session['matricula_pendente'] = {
-                'aluno_id':       aluno.pk,
-                'aluno_nome':     aluno.nome,
-                'curso_id':       curso.pk,
-                'curso_nome':     curso.nome,
-                'turma_id':       turma.pk,
-                'turma_nome':     turma.nome_turma,
-                'data_matricula': cd_m['data_matricula'].isoformat()
-                                  if cd_m.get('data_matricula') else None,
-                'ano_letivo':     cd_m['ano_letivo'],
-                'data_pagamento': cd_p['data_pagamento'].isoformat()
-                                  if cd_p.get('data_pagamento') else None,
-                'valor_pago':     str(cd_p['valor_pago']),
-                'status':         cd_p['status'],
-            }
-            # Redireciona para a lista — a modal abre automaticamente
-            return redirect('matriculas_lista')
+            # ── Verificar duplicado de matrícula ─────────────────────
+            duplicado = Matricula.objects.filter(
+                id_aluno=aluno,
+                id_curso=curso,
+                id_turma=turma,
+            ).exists()
+
+            if duplicado:
+                form_matricula.add_error(
+                    None,  # erro não-field
+                    f"O aluno '{aluno.nome}' já está matriculado "
+                    f"no curso '{curso.nome}' / turma '{turma.nome_turma}'."
+                )
+                # Não avança — volta ao formulário com o erro
+            else:
+                # Guarda dados em session — ainda NÃO grava matrícula na BD
+                request.session['matricula_pendente'] = {
+                    'aluno_id':       aluno.pk,
+                    'aluno_nome':     aluno.nome,
+                    'aluno_criado':   criado,  # info para a modal
+                    'curso_id':       curso.pk,
+                    'curso_nome':     curso.nome,
+                    'turma_id':       turma.pk,
+                    'turma_nome':     turma.nome_turma,
+                    'data_matricula': cd_m['data_matricula'].isoformat()
+                                      if cd_m.get('data_matricula') else None,
+                    'ano_letivo':     cd_m['ano_letivo'],
+                    'data_pagamento': cd_p['data_pagamento'].isoformat()
+                                      if cd_p.get('data_pagamento') else None,
+                    'valor_pago':     str(cd_p['valor_pago']),
+                    'status':         cd_p['status'],
+                }
+                return redirect('matriculas_lista')
+
+        else:
+            messages.warning(
+                request,
+                "Corrige os erros assinalados antes de submeter."
+            )
 
     return render(request, 'escola_musica/matricula_nova.html', {
         'form_matricula': form_matricula,
