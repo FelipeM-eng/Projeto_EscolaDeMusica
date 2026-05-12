@@ -4,3 +4,6 @@ CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 [ERROR] 2026-05-08 11:08:40,252 views: DatabaseError ao confirmar matrícula | user=admin | erro=Pagamento não está regularizado!
 CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 
+[ERROR] 2026-05-12 10:35:07,268 views: DatabaseError ao confirmar | user=admin | erro=Pagamento não está regularizado!
+CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
+

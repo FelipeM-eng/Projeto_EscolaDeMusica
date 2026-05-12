@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.core.validators import validate_email
 import datetime
 import re
 import unicodedata
@@ -241,51 +242,56 @@ class PagamentoEdicaoForm(PagamentoForm):
 # ── Constantes de validação do nome ──────────────────────────
 # Permite letras (incluindo acentuadas), espaços, hífens e apóstrofos
 # Bloqueia qualquer outro caracter — SQL, HTML, scripts, etc.
-REGEX_NOME_VALIDO = re.compile(
-    r"^[\w\s\-\'À-ÖØ-öø-ÿ]+$",
-    re.UNICODE
-)
-NOME_MIN_CHARS = 2
-NOME_MAX_CHARS = 100
+# ─────────────────────────────────────────────────────────────
+# CONSTANTES DE VALIDAÇÃO
+# ─────────────────────────────────────────────────────────────
+
+REGEX_NOME_VALIDO     = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ\s\-\']+$", re.UNICODE)
+REGEX_TELEFONE_VALIDO = re.compile(r"^\+?[\d\s\-\(\)]{7,20}$")
+NOME_MIN_CHARS        = 2
+NOME_MAX_CHARS        = 100
 
 
 def _sanitizar_nome(valor):
-    """
-    Sanitiza e normaliza um nome de aluno.
-    1. Remove espaços no início e no fim
-    2. Colapsa espaços duplicados internos
-    3. Normaliza unicode (NFC) — evita representações duplas do mesmo caracter
-    4. Capitaliza cada palavra (João silva → João Silva)
-    """
+    """Normaliza unicode, colapsa espaços, capitaliza."""
     if not valor:
         return valor
-    # Normaliza unicode
     valor = unicodedata.normalize('NFC', valor)
-    # Remove espaços extra
     valor = ' '.join(valor.split())
-    # Capitaliza
     valor = valor.title()
     return valor
 
 
-class MatriculaForm(forms.ModelForm):
+def _sanitizar_texto(valor):
+    """Remove espaços extra e normaliza unicode."""
+    if not valor:
+        return valor
+    valor = unicodedata.normalize('NFC', valor)
+    return valor.strip()
+
+
+# ─────────────────────────────────────────────────────────────
+# FORMULÁRIO DE DADOS PESSOAIS DO ALUNO
+# ─────────────────────────────────────────────────────────────
+
+class AlunoForm(forms.Form):
     """
-    Formulário de matrícula com campo de texto livre para o aluno.
-    O aluno é procurado ou criado na view após validação deste form.
+    Formulário de dados pessoais do aluno.
+    Usado em conjunto com MatriculaForm na criação de matrícula.
+    Não é um ModelForm — a gravação é feita manualmente na view
+    para controlo total da lógica de procura/criação.
     """
 
-    # Campo de texto livre em vez de ForeignKey select
-    nome_aluno = forms.CharField(
-        label='Aluno',
+    nome = forms.CharField(
+        label='Nome completo',
         max_length=NOME_MAX_CHARS,
         min_length=NOME_MIN_CHARS,
         required=True,
         widget=forms.TextInput(attrs={
-            'class':       'campo-input',
-            'placeholder': 'Nome completo do aluno',
+            'class':        'campo-input',
+            'placeholder':  'Ex: João Silva',
             'autocomplete': 'off',
-            'required':    True,
-            'maxlength':   str(NOME_MAX_CHARS),
+            'maxlength':    str(NOME_MAX_CHARS),
         }),
         error_messages={
             'required':   'O nome do aluno é obrigatório.',
@@ -293,6 +299,183 @@ class MatriculaForm(forms.ModelForm):
             'max_length': f'O nome não pode ter mais de {NOME_MAX_CHARS} caracteres.',
         },
     )
+
+    email = forms.CharField(
+        label='Email',
+        max_length=120,
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'Ex: joao.silva@email.com',
+            'autocomplete': 'off',
+            'maxlength':    '120',
+        }),
+        error_messages={
+            'max_length': 'O email não pode ter mais de 120 caracteres.',
+        },
+    )
+
+    telefone = forms.CharField(
+        label='Telefone',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'Ex: +351 912 345 678',
+            'autocomplete': 'off',
+            'maxlength':    '20',
+        }),
+        error_messages={
+            'max_length': 'O telefone não pode ter mais de 20 caracteres.',
+        },
+    )
+
+    data_nascimento = forms.DateField(
+        label='Data de nascimento',
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type':  'date',
+                'class': 'campo-input',
+                # Não pode nascer no futuro
+                'max':   timezone.now().date().isoformat(),
+                # Máximo 120 anos atrás
+                'min':   (
+                    timezone.now().date().replace(
+                        year=timezone.now().year - 120
+                    )
+                ).isoformat(),
+            },
+            format='%Y-%m-%d'
+        ),
+        error_messages={
+            'invalid':   'Data de nascimento inválida. Usa o selector de data.',
+            'required':  'A data de nascimento é obrigatória.',
+        },
+    )
+
+    # ── Validações individuais ──────────────────────────────
+
+    def clean_nome(self):
+        valor = self.cleaned_data.get('nome', '')
+
+        if not valor or not valor.strip():
+            raise ValidationError("O nome do aluno é obrigatório.")
+
+        valor = _sanitizar_nome(valor)
+
+        if len(valor) < NOME_MIN_CHARS:
+            raise ValidationError(
+                f"O nome deve ter pelo menos {NOME_MIN_CHARS} caracteres "
+                "após remoção de espaços."
+            )
+
+        # Valida caracteres — apenas letras, espaços, hífens, apóstrofos
+        if not REGEX_NOME_VALIDO.match(valor):
+            raise ValidationError(
+                "O nome contém caracteres inválidos. "
+                "Apenas letras, espaços, hífens e apóstrofos são permitidos."
+            )
+
+        # Bloqueia padrões de injecção mesmo que passem o regex
+        chars_proibidos = ['<', '>', '{', '}', ';', '=', '/', '\\',
+                           '@', '#', '$', '%', '*', '|', '&', '^', '`']
+        for char in chars_proibidos:
+            if char in valor:
+                raise ValidationError(
+                    "O nome contém caracteres não permitidos."
+                )
+
+        return valor
+
+    def clean_email(self):
+        valor = self.cleaned_data.get('email', '')
+
+        if not valor:
+            return None  # campo opcional
+
+        valor = _sanitizar_texto(valor).lower()
+
+        # Valida formato de email com o validator do Django
+        try:
+            validate_email(valor)
+        except ValidationError:
+            raise ValidationError(
+                "Introduz um endereço de email válido (ex: nome@dominio.com)."
+            )
+
+        # Bloqueia caracteres de injecção no email
+        chars_proibidos = ['<', '>', '{', '}', ';', '\'', '"', '\\']
+        for char in chars_proibidos:
+            if char in valor:
+                raise ValidationError(
+                    "O email contém caracteres não permitidos."
+                )
+
+        return valor
+
+    def clean_telefone(self):
+        valor = self.cleaned_data.get('telefone', '')
+
+        if not valor or not valor.strip():
+            return None  # campo opcional
+
+        valor = _sanitizar_texto(valor)
+
+        # Valida formato: apenas dígitos, espaços, +, -, (, )
+        if not REGEX_TELEFONE_VALIDO.match(valor):
+            raise ValidationError(
+                "Formato de telefone inválido. "
+                "Usa apenas dígitos, espaços, +, - e parênteses "
+                "(ex: +351 912 345 678)."
+            )
+
+        # Verifica número mínimo de dígitos
+        apenas_digitos = re.sub(r'\D', '', valor)
+        if len(apenas_digitos) < 7:
+            raise ValidationError(
+                "O número de telefone deve ter pelo menos 7 dígitos."
+            )
+
+        return valor
+
+    def clean_data_nascimento(self):
+        data = self.cleaned_data.get('data_nascimento')
+
+        if not data:
+            return None  # campo opcional
+
+        hoje = timezone.now().date()
+
+        # Não pode ser no futuro
+        if data > hoje:
+            raise ValidationError(
+                "A data de nascimento não pode ser uma data futura."
+            )
+
+        # Não pode ser há mais de 120 anos
+        data_minima = hoje.replace(year=hoje.year - 120)
+        if data < data_minima:
+            raise ValidationError(
+                "A data de nascimento introduzida não é válida "
+                "(máximo 120 anos atrás)."
+            )
+
+        # Aluno deve ter pelo menos 3 anos
+        data_minima_idade = hoje.replace(year=hoje.year - 3)
+        if data > data_minima_idade:
+            raise ValidationError(
+                "O aluno deve ter pelo menos 3 anos de idade."
+            )
+
+        return data
+
+
+class MatriculaForm(forms.ModelForm):
+    """
+    Formulário de matrícula com campo de texto livre para o aluno.
+    O aluno é procurado ou criado na view após validação deste form.
+    """
 
     class Meta:
         model  = Matricula

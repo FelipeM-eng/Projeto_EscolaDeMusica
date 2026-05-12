@@ -168,3 +168,55 @@
   margin-left: 0.4rem;
   vertical-align: middle;
 }
+
+/* ── Grid de 3 colunas para nova matrícula ── */
+.form-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* ── Label de campo opcional ── */
+.campo-opcional {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--cor-texto-suave);
+  margin-left: 0.3rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Separador de secção na modal ── */
+.modal__secao-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cor-primaria);
+  display: flex;
+  align-items: center;
+  grid-column: 1 / -1;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--cor-borda);
+  margin-top: 0.25rem;
+}
+
+.modal__secao-label:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* ── Badge aluno novo ── */
+.badge-novo {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: rgba(79, 143, 166, 0.15);
+  border: 1px solid rgba(79, 143, 166, 0.4);
+  border-radius: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7ecfea;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
