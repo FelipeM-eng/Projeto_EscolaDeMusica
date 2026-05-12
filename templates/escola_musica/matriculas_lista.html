@@ -40,7 +40,11 @@
       <tbody>
         {% for m in matriculas %}
         <tr class="tabela__linha">
-          <td><span class="texto-suave">#{{ m.id_matricula }}</span></td>
+          <td>
+            <span class="texto-suave">
+              #{{ forloop.counter }}
+            </span>
+          </td>
           <td><span class="aluno-nome">{{ m.id_aluno.nome }}</span></td>
           <td>{{ m.id_curso.nome }}</td>
           <td>{{ m.id_turma.nome_turma }}</td>
@@ -99,42 +103,62 @@
     </div>
 
     <div class="modal__corpo">
-      <dl class="modal__lista">
-        <dt>Aluno</dt>
-        <dd>
-          {{ pendente.aluno_nome }}
-          {% if pendente.aluno_criado %}
-            <span class="badge-novo">novo</span>
-          {% endif %}
-        </dd>
+  <dl class="modal__lista">
 
-        <dt>Curso</dt>
-        <dd>{{ pendente.curso_nome }}</dd>
+    <!-- Dados do aluno -->
+    <dt class="modal__secao-label">Aluno</dt>
+    <dd>
+      {{ pendente.aluno_nome }}
+      {% if pendente.aluno_criado %}
+        <span class="badge-novo">novo</span>
+      {% endif %}
+    </dd>
 
-        <dt>Turma</dt>
-        <dd>{{ pendente.turma_nome }}</dd>
+    {% if pendente.aluno_email != '—' %}
+      <dt>Email</dt>
+      <dd>{{ pendente.aluno_email }}</dd>
+    {% endif %}
 
-        <dt>Ano letivo</dt>
-        <dd>{{ pendente.ano_letivo }}</dd>
+    {% if pendente.aluno_telefone != '—' %}
+      <dt>Telefone</dt>
+      <dd>{{ pendente.aluno_telefone }}</dd>
+    {% endif %}
 
-        <dt>Data de matrícula</dt>
-        <dd>
-          {% if pendente.data_matricula %}
-            {{ pendente.data_matricula }}
-          {% else %}—{% endif %}
-        </dd>
+    {% if pendente.aluno_nascimento != '—' %}
+      <dt>Data de nascimento</dt>
+      <dd>{{ pendente.aluno_nascimento }}</dd>
+    {% endif %}
 
-        <dt>Valor pago</dt>
-        <dd>{{ pendente.valor_pago }} €</dd>
+    <!-- Dados da matrícula -->
+    <dt>Curso</dt>
+    <dd>{{ pendente.curso_nome }}</dd>
 
-        <dt>Estado pagamento</dt>
-        <dd>
-          <span class="badge badge--{{ pendente.status|lower }}">
-            {{ pendente.status }}
-          </span>
-        </dd>
-      </dl>
-    </div>
+    <dt>Turma</dt>
+    <dd>{{ pendente.turma_nome }}</dd>
+
+    <dt>Ano letivo</dt>
+    <dd>{{ pendente.ano_letivo }}</dd>
+
+    <dt>Data de matrícula</dt>
+    <dd>
+      {% if pendente.data_matricula %}
+        {{ pendente.data_matricula }}
+      {% else %}—{% endif %}
+    </dd>
+
+    <!-- Dados do pagamento -->
+    <dt>Valor pago</dt>
+    <dd>{{ pendente.valor_pago }} €</dd>
+
+    <dt>Estado pagamento</dt>
+    <dd>
+      <span class="badge badge--{{ pendente.status|lower }}">
+        {{ pendente.status }}
+      </span>
+    </dd>
+
+  </dl>
+</div>
 
     <div class="modal__rodape">
       <!-- Cancelar — limpa a session e fecha a modal -->

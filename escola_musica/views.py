@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.db import IntegrityError, DatabaseError
 
 from .models import Matricula, Pagamento, Aluno, Curso, Turma
-from .forms import MatriculaForm, PagamentoForm, PagamentoEdicaoForm
+from .forms import MatriculaForm, PagamentoForm, PagamentoEdicaoForm, AlunoForm
 
 logger = logging.getLogger('escola_musica')
 
@@ -75,45 +75,75 @@ def matriculas_lista(request):
 @login_required
 def matricula_nova(request):
     """
-    GET  → formulário com campo de texto para nome do aluno
-    POST → valida, procura ou cria o aluno, guarda em session,
-           redireciona para confirmação na modal.
-           A BD NÃO é tocada ainda (excepto eventual criação de Aluno).
+    GET  → formulário com 3 secções:
+           dados do aluno + dados da matrícula + dados do pagamento
+
+    POST → valida os formulários, procura ou cria o aluno,
+           guarda os dados em session e redireciona
+           para confirmação na modal.
+
+           A BD NÃO é tocada ainda
+           (excepto eventual criação de Aluno).
     """
+
+    # Formulário de dados do aluno
+    form_aluno = AlunoForm(request.POST or None)
+
+    # Formulário de dados da matrícula
     form_matricula = MatriculaForm(request.POST or None)
+
+    # Formulário de pagamento
+    # Recebe o utilizador autenticado para controlo interno
     form_pagamento = PagamentoForm(
         request.POST or None,
         utilizador=request.user
     )
 
     if request.method == 'POST':
+
+        # Validação independente dos 3 formulários
+        aluno_valido = form_aluno.is_valid()
         mat_valida = form_matricula.is_valid()
         pag_valido = form_pagamento.is_valid()
 
-        if mat_valida and pag_valido:
-            cd_m       = form_matricula.cleaned_data
-            cd_p       = form_pagamento.cleaned_data
-            nome_aluno = cd_m['nome_aluno']  # já sanitizado pelo form
-            curso      = cd_m['id_curso']
-            turma      = cd_m['id_turma']
+        # Só continua se TODOS os formulários forem válidos
+        if aluno_valido and mat_valida and pag_valido:
+
+            # Dados já limpos e sanitizados pelos forms
+            cd_a = form_aluno.cleaned_data
+            cd_m = form_matricula.cleaned_data
+            cd_p = form_pagamento.cleaned_data
+
+            nome = cd_a['nome']
+            curso = cd_m['id_curso']
+            turma = cd_m['id_turma']
 
             # ── Procura ou cria o aluno ───────────────────────────────
             # Usa iexact para comparação case-insensitive
             # get_or_create com ORM — nunca SQL manual (S3)
             try:
                 aluno, criado = Aluno.objects.get_or_create(
-                    nome__iexact=nome_aluno,
-                    defaults={'nome': nome_aluno}
+                    nome__iexact=nome,
+                    defaults={
+                        'nome': nome,
+                        'email': cd_a.get('email'),
+                        'telefone': cd_a.get('telefone'),
+                        'data_nascimento': cd_a.get('data_nascimento'),
+                    }
                 )
+
             except Aluno.MultipleObjectsReturned:
                 # Se existir mais do que um aluno com o mesmo nome,
                 # usa o primeiro por ordem de ID
-                aluno  = Aluno.objects.filter(
-                    nome__iexact=nome_aluno
+                aluno = Aluno.objects.filter(
+                    nome__iexact=nome
                 ).order_by('id_aluno').first()
+
                 criado = False
 
             # ── Verificar duplicado de matrícula ─────────────────────
+            # Impede que o mesmo aluno seja matriculado
+            # no mesmo curso e turma
             duplicado = Matricula.objects.filter(
                 id_aluno=aluno,
                 id_curso=curso,
@@ -121,39 +151,80 @@ def matricula_nova(request):
             ).exists()
 
             if duplicado:
+
+                # Erro não associado a um campo específico
                 form_matricula.add_error(
-                    None,  # erro não-field
+                    None,
                     f"O aluno '{aluno.nome}' já está matriculado "
                     f"no curso '{curso.nome}' / turma '{turma.nome_turma}'."
                 )
+
                 # Não avança — volta ao formulário com o erro
+
             else:
-                # Guarda dados em session — ainda NÃO grava matrícula na BD
+                # Guarda dados temporariamente em session
+                # A matrícula ainda NÃO é gravada na BD
+                # (apenas será confirmada posteriormente)
                 request.session['matricula_pendente'] = {
-                    'aluno_id':       aluno.pk,
-                    'aluno_nome':     aluno.nome,
-                    'aluno_criado':   criado,  # info para a modal
-                    'curso_id':       curso.pk,
-                    'curso_nome':     curso.nome,
-                    'turma_id':       turma.pk,
-                    'turma_nome':     turma.nome_turma,
-                    'data_matricula': cd_m['data_matricula'].isoformat()
-                                      if cd_m.get('data_matricula') else None,
-                    'ano_letivo':     cd_m['ano_letivo'],
-                    'data_pagamento': cd_p['data_pagamento'].isoformat()
-                                      if cd_p.get('data_pagamento') else None,
-                    'valor_pago':     str(cd_p['valor_pago']),
-                    'status':         cd_p['status'],
+
+                    # ── Dados do aluno ──────────────────────────────
+                    'aluno_id': aluno.pk,
+                    'aluno_nome': aluno.nome,
+                    'aluno_criado': criado,  # info para a modal
+
+                    'aluno_email': (
+                        cd_a.get('email') or '—'
+                    ),
+
+                    'aluno_telefone': (
+                        cd_a.get('telefone') or '—'
+                    ),
+
+                    'aluno_nascimento': (
+                        cd_a['data_nascimento'].strftime('%d/%m/%Y')
+                        if cd_a.get('data_nascimento')
+                        else '—'
+                    ),
+
+                    # ── Dados da matrícula ─────────────────────────
+                    'curso_id': curso.pk,
+                    'curso_nome': curso.nome,
+
+                    'turma_id': turma.pk,
+                    'turma_nome': turma.nome_turma,
+
+                    'data_matricula': (
+                        cd_m['data_matricula'].isoformat()
+                        if cd_m.get('data_matricula')
+                        else None
+                    ),
+
+                    'ano_letivo': cd_m['ano_letivo'],
+
+                    # ── Dados do pagamento ─────────────────────────
+                    'data_pagamento': (
+                        cd_p['data_pagamento'].isoformat()
+                        if cd_p.get('data_pagamento')
+                        else None
+                    ),
+
+                    'valor_pago': str(cd_p['valor_pago']),
+                    'status': cd_p['status'],
                 }
+
                 return redirect('matriculas_lista')
 
         else:
+            # Mensagem genérica caso existam erros de validação
             messages.warning(
                 request,
                 "Corrige os erros assinalados antes de submeter."
             )
 
+    # Renderiza a página com os formulários
+    # (vazios no GET ou preenchidos no POST com erros)
     return render(request, 'escola_musica/matricula_nova.html', {
+        'form_aluno': form_aluno,
         'form_matricula': form_matricula,
         'form_pagamento': form_pagamento,
     })
@@ -173,9 +244,9 @@ def matricula_cancelar(request):
 @require_POST
 def matricula_confirmar(request):
     """
-    Chamado quando o utilizador clica CONFIRMAR na modal.
-    Lê os dados da session e grava efectivamente na BD.
-    Limpa a session após uso (sucesso ou erro).
+    Grava efectivamente na BD após confirmação na modal.
+    Se o aluno já existia, actualiza os dados pessoais
+    com os que foram introduzidos (email, telefone, nascimento).
     """
     pendente = request.session.pop('matricula_pendente', None)
 
@@ -184,10 +255,31 @@ def matricula_confirmar(request):
         return redirect('matriculas_lista')
 
     try:
-        # Recupera os objectos da BD pelos IDs guardados em session
         aluno = Aluno.objects.get(pk=pendente['aluno_id'])
         curso = Curso.objects.get(pk=pendente['curso_id'])
         turma = Turma.objects.get(pk=pendente['turma_id'])
+
+        # Actualiza dados pessoais do aluno se foram fornecidos
+        # (aplica-se tanto a alunos novos como a existentes)
+        campos_actualizar = []
+        if pendente.get('aluno_email') and pendente['aluno_email'] != '—':
+            aluno.email = pendente['aluno_email']
+            campos_actualizar.append('email')
+        if pendente.get('aluno_telefone') and pendente['aluno_telefone'] != '—':
+            aluno.telefone = pendente['aluno_telefone']
+            campos_actualizar.append('telefone')
+        if pendente.get('aluno_nascimento') and pendente['aluno_nascimento'] != '—':
+            from datetime import datetime
+            try:
+                aluno.data_nascimento = datetime.strptime(
+                    pendente['aluno_nascimento'], '%d/%m/%Y'
+                ).date()
+                campos_actualizar.append('data_nascimento')
+            except ValueError:
+                pass
+
+        if campos_actualizar:
+            aluno.save(update_fields=campos_actualizar)
 
         # Cria o pagamento
         pagamento = Pagamento.objects.create(
@@ -213,7 +305,7 @@ def matricula_confirmar(request):
 
     except IntegrityError as e:
         logger.error(
-            f"IntegrityError ao confirmar matrícula | "
+            f"IntegrityError ao confirmar | "
             f"user={request.user.username} | erro={e}"
         )
         messages.error(
@@ -221,10 +313,9 @@ def matricula_confirmar(request):
             "Não foi possível registar: este aluno já está inscrito "
             "neste curso e turma."
         )
-
     except DatabaseError as e:
         logger.error(
-            f"DatabaseError ao confirmar matrícula | "
+            f"DatabaseError ao confirmar | "
             f"user={request.user.username} | erro={e}"
         )
         messages.error(
@@ -232,10 +323,9 @@ def matricula_confirmar(request):
             "Não foi possível concluir a matrícula. "
             "Verifica se o pagamento está regularizado."
         )
-
     except Exception as e:
         logger.error(
-            f"Erro inesperado ao confirmar matrícula | "
+            f"Erro inesperado ao confirmar | "
             f"user={request.user.username} | erro={e}"
         )
         messages.error(
