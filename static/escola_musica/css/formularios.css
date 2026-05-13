@@ -220,3 +220,17 @@
   margin-left: 0.4rem;
   vertical-align: middle;
 }
+
+/* ── Campo readonly — ano letivo ── */
+.campo-readonly {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(201, 168, 76, 0.1) !important;
+  user-select: none;
+}
+
+.campo-readonly:focus {
+  box-shadow: none !important;
+  border-color: rgba(201, 168, 76, 0.1) !important;
+}

@@ -1,4 +1,5 @@
 from django import forms
+import calendar as _calendar
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.validators import validate_email
@@ -78,6 +79,14 @@ OPCOES_STATUS_EDICAO = [
 # FORMULÁRIO DE PAGAMENTO — criação
 # ─────────────────────────────────────────────────────────────
 
+def _ultimo_dia_mes_atual():
+    hoje = timezone.now().date()
+    ultimo = _calendar.monthrange(hoje.year, hoje.month)[1]
+    return hoje.replace(day=ultimo)
+
+def _primeiro_dia_mes_atual():
+    return timezone.now().date().replace(day=1)
+
 class PagamentoForm(forms.ModelForm):
 
     status = forms.ChoiceField(
@@ -97,13 +106,8 @@ class PagamentoForm(forms.ModelForm):
             'data_pagamento': forms.DateInput(
                 attrs={
                     'type':     'date',
-                    # Não pode ser futura — máximo = hoje
-                    'max':      timezone.now().date().isoformat(),
-                    # Mínimo = 60 dias atrás (utilizador normal)
-                    'min':      (
-                        timezone.now().date() -
-                        datetime.timedelta(days=DIAS_RETROATIVOS_NORMAL)
-                    ).isoformat(),
+                    'min':      _primeiro_dia_mes_atual().isoformat(),
+                    'max':      _ultimo_dia_mes_atual().isoformat(),
                     'class':    'campo-input',
                     'required': True,
                 },
@@ -154,30 +158,19 @@ class PagamentoForm(forms.ModelForm):
 
         _validar_data_minima(data, "Data de pagamento")
 
-        # Regra 1: não pode ser futura
-        if data > hoje:
-            raise ValidationError(
-                "A data de pagamento não pode ser uma data futura. "
-                f"A data máxima permitida é {hoje.strftime('%d/%m/%Y')}."
-            )
-
-        # Regra 2: retroactividade limitada para utilizadores normais
-        is_admin = (
-            self.utilizador and
-            (self.utilizador.is_superuser or self.utilizador.is_staff)
+        # Regra: data deve estar no mês actual
+        primeiro_dia = hoje.replace(day=1)
+        import calendar as _cal
+        ultimo_dia = hoje.replace(
+            day=_cal.monthrange(hoje.year, hoje.month)[1]
         )
-        if not is_admin:
-            data_minima_retro = hoje - datetime.timedelta(
-                days=DIAS_RETROATIVOS_NORMAL
+
+        if data < primeiro_dia or data > ultimo_dia:
+            raise ValidationError(
+                f"A data de pagamento deve ser no mês actual "
+                f"({primeiro_dia.strftime('%d/%m/%Y')} a "
+                f"{ultimo_dia.strftime('%d/%m/%Y')})."
             )
-            if data < data_minima_retro:
-                raise ValidationError(
-                    f"Não é possível registar pagamentos com mais de "
-                    f"{DIAS_RETROATIVOS_NORMAL} dias de retroactividade "
-                    f"(mínimo permitido: "
-                    f"{data_minima_retro.strftime('%d/%m/%Y')}). "
-                    "Contacta um administrador para lançamentos anteriores."
-                )
 
         return data
 
@@ -501,9 +494,12 @@ class MatriculaForm(forms.ModelForm):
                     'max':         '2100',
                     'placeholder': str(ANO_ATUAL),
                     'step':        '1',
-                    'class':       'campo-input',
+                    'class':       'campo-input campo-readonly',
                     'required':    True,
                     'id':          'id_ano_letivo',
+                    'readonly':    True,   # ← não editável pelo utilizador
+                    'tabindex':    '-1',   # ← não recebe foco via teclado
+                    'title':       'Preenchido automaticamente com o ano da data de matrícula',
                 }
             ),
         }
@@ -618,13 +614,18 @@ class MatriculaForm(forms.ModelForm):
         return data
 
     def clean_ano_letivo(self):
+        """
+        O ano letivo é derivado da data de matrícula.
+        Ignora qualquer valor submetido pelo utilizador
+        e usa sempre o ano da data_matricula (protecção server-side).
+        """
+        data = self.cleaned_data.get('data_matricula')
+        if data:
+            return data.year
+        # Fallback: se data inválida, o clean_data_matricula já gerou erro
         ano = self.cleaned_data.get('ano_letivo')
         if ano is None:
             raise ValidationError("O ano letivo é obrigatório.")
-        if ano < 1900:
-            raise ValidationError("O ano letivo não pode ser anterior a 1900.")
-        if ano > 2100:
-            raise ValidationError("O ano letivo não pode ser superior a 2100.")
         return ano
 
     def clean(self):

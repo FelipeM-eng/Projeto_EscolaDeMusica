@@ -151,68 +151,56 @@ def matricula_nova(request):
             ).exists()
 
             if duplicado:
-
-                # Erro não associado a um campo específico
                 form_matricula.add_error(
                     None,
                     f"O aluno '{aluno.nome}' já está matriculado "
                     f"no curso '{curso.nome}' / turma '{turma.nome_turma}'."
                 )
 
-                # Não avança — volta ao formulário com o erro
-
             else:
-                # Guarda dados temporariamente em session
-                # A matrícula ainda NÃO é gravada na BD
-                # (apenas será confirmada posteriormente)
-                request.session['matricula_pendente'] = {
+                # ── Validação cruzada: data de pagamento >= data de matrícula ──
+                data_matricula  = cd_m.get('data_matricula')
+                data_pagamento  = cd_p.get('data_pagamento')
 
-                    # ── Dados do aluno ──────────────────────────────
-                    'aluno_id': aluno.pk,
-                    'aluno_nome': aluno.nome,
-                    'aluno_criado': criado,  # info para a modal
+                if data_matricula and data_pagamento:
+                    if data_pagamento < data_matricula:
+                        form_pagamento.add_error(
+                            'data_pagamento',
+                            f"A data de pagamento ({data_pagamento.strftime('%d/%m/%Y')}) "
+                            f"não pode ser anterior à data de matrícula "
+                            f"({data_matricula.strftime('%d/%m/%Y')})."
+                        )
+                        # Não avança — volta ao formulário com o erro
 
-                    'aluno_email': (
-                        cd_a.get('email') or '—'
-                    ),
-
-                    'aluno_telefone': (
-                        cd_a.get('telefone') or '—'
-                    ),
-
-                    'aluno_nascimento': (
-                        cd_a['data_nascimento'].strftime('%d/%m/%Y')
-                        if cd_a.get('data_nascimento')
-                        else '—'
-                    ),
-
-                    # ── Dados da matrícula ─────────────────────────
-                    'curso_id': curso.pk,
-                    'curso_nome': curso.nome,
-
-                    'turma_id': turma.pk,
-                    'turma_nome': turma.nome_turma,
-
-                    'data_matricula': (
-                        cd_m['data_matricula'].isoformat()
-                        if cd_m.get('data_matricula')
-                        else None
-                    ),
-
-                    'ano_letivo': cd_m['ano_letivo'],
-
-                    # ── Dados do pagamento ─────────────────────────
-                    'data_pagamento': (
-                        cd_p['data_pagamento'].isoformat()
-                        if cd_p.get('data_pagamento')
-                        else None
-                    ),
-
-                    'valor_pago': str(cd_p['valor_pago']),
-                    'status': cd_p['status'],
-                }
-
-                return redirect('matriculas_lista')
+                    else:
+                        # Tudo válido — guarda em session
+                        request.session['matricula_pendente'] = {
+                            'aluno_id':         aluno.pk,
+                            'aluno_nome':       aluno.nome,
+                            'aluno_criado':     criado,
+                            'aluno_email':      cd_a.get('email') or '—',
+                            'aluno_telefone':   cd_a.get('telefone') or '—',
+                            'aluno_nascimento': (
+                                cd_a['data_nascimento'].strftime('%d/%m/%Y')
+                                if cd_a.get('data_nascimento') else '—'
+                            ),
+                            'curso_id':         curso.pk,
+                            'curso_nome':       curso.nome,
+                            'turma_id':         turma.pk,
+                            'turma_nome':       turma.nome_turma,
+                            'data_matricula':   (
+                                cd_m['data_matricula'].isoformat()
+                                if cd_m.get('data_matricula') else None
+                            ),
+                            'ano_letivo':       cd_m['ano_letivo'],
+                            'data_pagamento':   (
+                                cd_p['data_pagamento'].isoformat()
+                                if cd_p.get('data_pagamento') else None
+                            ),
+                            'valor_pago':       str(cd_p['valor_pago']),
+                            'status':           cd_p['status'],
+                        }
+                        return redirect('matriculas_lista')
 
         else:
             # Mensagem genérica caso existam erros de validação
@@ -223,10 +211,12 @@ def matricula_nova(request):
 
     # Renderiza a página com os formulários
     # (vazios no GET ou preenchidos no POST com erros)
+    # No return render do final da view, substitui por:
     return render(request, 'escola_musica/matricula_nova.html', {
-        'form_aluno': form_aluno,
+        'form_aluno':     form_aluno,
         'form_matricula': form_matricula,
         'form_pagamento': form_pagamento,
+        'turmas_json':    Turma.objects.select_related('id_curso').order_by('nome_turma'),
     })
 
 @login_required
