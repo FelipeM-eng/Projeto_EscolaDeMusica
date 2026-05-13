@@ -205,7 +205,14 @@ class PagamentoForm(forms.ModelForm):
 # ─────────────────────────────────────────────────────────────
 
 class PagamentoEdicaoForm(PagamentoForm):
-    """Permite Cancelado e aplica as mesmas regras de datas."""
+    """
+    Formulário de edição de pagamento.
+    - Permite estado Cancelado e Pendente
+    - Se estado actual for 'Pago': campos bloqueados no frontend
+      e validação usa valores originais (campos disabled não são
+      enviados pelo browser no POST)
+    - Se estado for Pendente ou Cancelado: validação normal
+    """
 
     status = forms.ChoiceField(
         choices=OPCOES_STATUS_EDICAO,
@@ -214,10 +221,52 @@ class PagamentoEdicaoForm(PagamentoForm):
             'required':       'Seleciona o estado do pagamento.',
             'invalid_choice': 'Estado inválido.',
         },
-        widget=forms.Select(attrs={'class': 'campo-input', 'required': True}),
+        widget=forms.Select(
+            attrs={'class': 'campo-input', 'required': True}
+        ),
     )
 
+    def __init__(self, *args, utilizador=None, **kwargs):
+        super().__init__(*args, utilizador=utilizador, **kwargs)
+        self.utilizador   = utilizador
+        self._pag_pago    = (
+            self.instance and
+            self.instance.pk and
+            self.instance.status == 'Pago'
+        )
+
+        # Se pagamento Pago — bloqueia campos no frontend
+        if self._pag_pago:
+            for campo in ['valor_pago', 'status', 'data_pagamento']:
+                self.fields[campo].widget.attrs.update({
+                    'disabled': True,
+                    'title':    'Pagamento finalizado — não pode ser alterado.',
+                })
+            # Campos não obrigatórios no POST
+            # (browser não os envia quando disabled)
+            for campo in ['valor_pago', 'status', 'data_pagamento']:
+                self.fields[campo].required = False
+
+    def clean(self):
+        """
+        Se pagamento está Pago, injeta os valores originais
+        nos cleaned_data antes de qualquer validação cruzada.
+        Resolve o problema dos campos disabled não serem enviados.
+        """
+        cleaned = super().clean()
+
+        if self._pag_pago and self.instance and self.instance.pk:
+            cleaned['valor_pago']     = self.instance.valor_pago
+            cleaned['status']         = self.instance.status
+            cleaned['data_pagamento'] = self.instance.data_pagamento
+
+        return cleaned
+
     def clean_status(self):
+        # Se Pago — devolve valor original sem validar
+        if self._pag_pago and self.instance and self.instance.pk:
+            return self.instance.status
+
         status = self.cleaned_data.get('status')
         if not status:
             raise ValidationError("Seleciona o estado do pagamento.")
@@ -227,6 +276,57 @@ class PagamentoEdicaoForm(PagamentoForm):
                 f"Estado inválido. Escolhe entre: {', '.join(opcoes)}."
             )
         return status
+
+    def clean_valor_pago(self):
+        # Se Pago — devolve valor original sem validar
+        if self._pag_pago and self.instance and self.instance.pk:
+            return self.instance.valor_pago
+        return super().clean_valor_pago()
+
+    def clean_data_pagamento(self):
+        # Se Pago — devolve data original sem validar
+        if self._pag_pago and self.instance and self.instance.pk:
+            return self.instance.data_pagamento
+
+        # Se Pendente ou Cancelado — validação normal do mês actual
+        data = self.cleaned_data.get('data_pagamento')
+        hoje = timezone.now().date()
+
+        if not data:
+            raise ValidationError("A data de pagamento é obrigatória.")
+
+        _validar_data_minima(data, "Data de pagamento")
+
+        primeiro_dia = hoje.replace(day=1)
+        import calendar as _cal
+        ultimo_dia = hoje.replace(
+            day=_cal.monthrange(hoje.year, hoje.month)[1]
+        )
+
+        if data < primeiro_dia or data > ultimo_dia:
+            raise ValidationError(
+                f"A data de pagamento deve ser no mês actual "
+                f"({primeiro_dia.strftime('%d/%m/%Y')} a "
+                f"{ultimo_dia.strftime('%d/%m/%Y')})."
+            )
+
+        return data
+
+    def save(self, commit=True):
+        """
+        Se pagamento Pago — garante que os valores originais
+        são preservados mesmo que o POST tenha sido manipulado.
+        """
+        instancia = super().save(commit=False)
+
+        if self._pag_pago and self.instance and self.instance.pk:
+            instancia.valor_pago     = self.instance.valor_pago
+            instancia.status         = self.instance.status
+            instancia.data_pagamento = self.instance.data_pagamento
+
+        if commit:
+            instancia.save()
+        return instancia
 
 
 # ─────────────────────────────────────────────────────────────
@@ -463,6 +563,153 @@ class AlunoForm(forms.Form):
 
         return data
 
+class AlunoEdicaoForm(forms.Form):
+    """
+    Formulário de edição dos dados pessoais do aluno.
+    Igual ao AlunoForm mas sem o campo nome
+    (o nome não deve ser alterado na edição de matrícula).
+    """
+
+    nome = forms.CharField(
+        label='Nome completo',
+        max_length=NOME_MAX_CHARS,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'Nome do aluno',
+            'autocomplete': 'off',
+            'maxlength':    str(NOME_MAX_CHARS),
+        }),
+        error_messages={
+            'required': 'O nome do aluno é obrigatório.',
+        },
+    )
+
+    email = forms.CharField(
+        label='Email',
+        max_length=120,
+        required=False,
+        widget=forms.EmailInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'Ex: joao.silva@email.com',
+            'autocomplete': 'off',
+        }),
+    )
+
+    telefone = forms.CharField(
+        label='Telefone',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'Ex: +351 912 345 678',
+            'autocomplete': 'off',
+        }),
+    )
+
+    data_nascimento = forms.DateField(
+        label='Data de nascimento',
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type':  'date',
+                'class': 'campo-input',
+                # Mínimo: 120 anos atrás
+                'min': (
+                    timezone.now().date().replace(
+                        year=timezone.now().year - 120
+                    )
+                ).isoformat(),
+                # Máximo: há pelo menos 3 anos (não pode ter menos de 3 anos)
+                'max': (
+                    timezone.now().date().replace(
+                        year=timezone.now().year - 3
+                    )
+                ).isoformat(),
+            },
+            format='%Y-%m-%d'
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _aplicar_atributos(self.fields)
+
+    def clean_nome(self):
+        valor = self.cleaned_data.get('nome', '')
+        if not valor or not valor.strip():
+            raise ValidationError("O nome do aluno é obrigatório.")
+        valor = _sanitizar_nome(valor)
+        if not REGEX_NOME_VALIDO.match(valor):
+            raise ValidationError(
+                "O nome contém caracteres inválidos. "
+                "Apenas letras, espaços, hífens e apóstrofos são permitidos."
+            )
+        return valor
+
+    def clean_email(self):
+        valor = self.cleaned_data.get('email', '')
+        if not valor:
+            return None
+        valor = _sanitizar_texto(valor).lower()
+        try:
+            validate_email(valor)
+        except ValidationError:
+            raise ValidationError(
+                "Introduz um endereço de email válido."
+            )
+        return valor
+
+    def clean_telefone(self):
+        valor = self.cleaned_data.get('telefone', '')
+        if not valor or not valor.strip():
+            return None
+        valor = _sanitizar_texto(valor)
+        if not REGEX_TELEFONE_VALIDO.match(valor):
+            raise ValidationError(
+                "Formato inválido. Ex: +351 912 345 678"
+            )
+        apenas_digitos = re.sub(r'\D', '', valor)
+        if len(apenas_digitos) < 7:
+            raise ValidationError(
+                "O número deve ter pelo menos 7 dígitos."
+            )
+        return valor
+
+    def clean_data_nascimento(self):
+        data = self.cleaned_data.get('data_nascimento')
+
+        if not data:
+            return None  
+
+        hoje = timezone.now().date()
+
+        # Não pode ser futura
+        if data > hoje:
+            raise ValidationError(
+                "A data de nascimento não pode ser uma data futura."
+            )
+
+        # Máximo 120 anos atrás
+        data_minima = hoje.replace(year=hoje.year - 120)
+        if data < data_minima:
+            raise ValidationError(
+                "Data de nascimento inválida — máximo 120 anos atrás."
+            )
+
+        # Mínimo 3 anos de idade
+        try:
+            data_maxima = hoje.replace(year=hoje.year - 3)
+        except ValueError:
+            # 29 fev em ano não bissexto
+            data_maxima = hoje.replace(year=hoje.year - 3, day=28)
+
+        if data > data_maxima:
+            raise ValidationError(
+                "O aluno deve ter pelo menos 3 anos de idade."
+            )
+
+        return data
 
 class MatriculaForm(forms.ModelForm):
     """
@@ -648,3 +895,71 @@ class MatriculaForm(forms.ModelForm):
                     f"ao curso '{curso.nome}'."
                 )
         return cleaned
+
+class MatriculaEdicaoForm(MatriculaForm):
+    """
+    Variante do MatriculaForm para edição de matrículas existentes.
+    Permite alterar a data de matrícula para qualquer data do ano actual
+    (não apenas a partir de hoje como na criação).
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Sobrepõe o widget da data de matrícula
+        # para permitir datas passadas do ano actual
+        self.fields['data_matricula'].widget = forms.DateInput(
+            attrs={
+                'type':     'date',
+                'min':      timezone.now().date().replace(
+                                month=1, day=1
+                            ).isoformat(),
+                'max':      timezone.now().date().replace(
+                                month=12, day=31
+                            ).isoformat(),
+                'class':    'campo-input',
+                'required': True,
+                'id':       'id_data_matricula',
+            },
+            format='%Y-%m-%d'
+        )
+
+    def clean_data_matricula(self):
+        """
+        Regra de edição: qualquer data do ano actual.
+        Substitui a regra da criação (mínimo = hoje).
+        """
+        data = self.cleaned_data.get('data_matricula')
+        hoje = timezone.now().date()
+
+        if not data:
+            raise ValidationError("A data de matrícula é obrigatória.")
+
+        _validar_data_minima(data, "Data de matrícula")
+
+        primeiro_dia_ano = hoje.replace(month=1, day=1)
+        ultimo_dia_ano   = hoje.replace(month=12, day=31)
+
+        if data < primeiro_dia_ano:
+            raise ValidationError(
+                f"A data de matrícula deve ser no ano actual "
+                f"(mínimo: {primeiro_dia_ano.strftime('%d/%m/%Y')})."
+            )
+        if data > ultimo_dia_ano:
+            raise ValidationError(
+                f"A data de matrícula não pode ser superior a "
+                f"{ultimo_dia_ano.strftime('%d/%m/%Y')}."
+            )
+        return data
+
+    def clean_ano_letivo(self):
+        """
+        Na edição, o ano letivo é derivado da data de matrícula editada.
+        """
+        data = self.cleaned_data.get('data_matricula')
+        if data:
+            return data.year
+        ano = self.cleaned_data.get('ano_letivo')
+        if ano is None:
+            raise ValidationError("O ano letivo é obrigatório.")
+        return ano    

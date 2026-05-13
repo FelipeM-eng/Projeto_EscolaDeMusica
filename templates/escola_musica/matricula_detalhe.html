@@ -5,13 +5,14 @@
 
 {% block css_extra %}
   <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/microfone.css' %}">
 {% endblock %}
 
 {% block conteudo %}
 
   <div class="pagina-cabecalho">
     <div>
-      <h1 class="pagina-titulo">Matrícula #{{ matricula.id_matricula }}</h1>
+      <h1 class="pagina-titulo">Matrícula Nº{{ matricula.id_matricula }}</h1>
       <p class="pagina-subtitulo">Detalhe completo do registo</p>
     </div>
     <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
@@ -86,5 +87,7 @@
     </div>
 
   </div>
+
+  {% include 'escola_musica/components/microfone.html' %}
 
 {% endblock %}
