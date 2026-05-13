@@ -7,6 +7,7 @@
 {% block css_extra %}
   <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
   <link rel="stylesheet" href="{% static 'escola_musica/css/modal.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/microfone.css' %}">
 {% endblock %}
 
 {% block conteudo %}
@@ -181,6 +182,8 @@
   </div>
 </div>
 {% endif %}
+
+{% include 'escola_musica/components/microfone.html' %}
 {% endblock %}
 
 {% block js_extra %}

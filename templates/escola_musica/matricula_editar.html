@@ -5,6 +5,7 @@
 
 {% block css_extra %}
   <link rel="stylesheet" href="{% static 'escola_musica/css/formularios.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/microfone.css' %}">
 {% endblock %}
 
 {% block conteudo %}
@@ -13,10 +14,16 @@
   <div>
     <h1 class="pagina-titulo">Editar Matrícula #{{ matricula.id_matricula }}</h1>
     <p class="pagina-subtitulo">
-      Todos os campos são obrigatórios (<span class="obrigatorio">*</span>).
+      Campos com <span class="obrigatorio">*</span> são obrigatórios.
+      {% if pag_pago %}
+        <span class="aviso-recepcao">
+          🔒 Pagamento finalizado — campos financeiros bloqueados.
+        </span>
+      {% endif %}
     </p>
   </div>
-  <a href="{% url 'matricula_detalhe' matricula.pk %}" class="btn-secundario">
+  <!-- Botão cancelar → lista de matrículas -->
+  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
     ← Cancelar
   </a>
 </div>
@@ -27,9 +34,33 @@
       id="form-matricula-editar">
   {% csrf_token %}
 
-  <div class="form-grid">
+  <div class="form-grid form-grid--3">
 
-    <!-- Dados da Matrícula -->
+    <!-- ── Secção 1: Dados do Aluno ── -->
+    <div class="form-secao">
+      <h2 class="form-secao__titulo">🎓 Dados do Aluno</h2>
+
+      {% for field in form_aluno %}
+        <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+          <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}
+              <span class="obrigatorio">*</span>
+            {% else %}
+              <span class="campo-opcional">(opcional)</span>
+            {% endif %}
+          </label>
+          {{ field }}
+          {% for erro in field.errors %}
+            <span class="form-erro" role="alert">
+              <span class="form-erro__icone">!</span>{{ erro }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Secção 2: Dados da Matrícula ── -->
     <div class="form-secao">
       <h2 class="form-secao__titulo">📋 Dados da Matrícula</h2>
 
@@ -57,15 +88,24 @@
       {% endif %}
     </div>
 
-    <!-- Dados do Pagamento -->
-    <div class="form-secao">
-      <h2 class="form-secao__titulo">💶 Dados do Pagamento</h2>
+    <!-- ── Secção 3: Dados do Pagamento ── -->
+    <div class="form-secao {% if pag_pago %}form-secao--bloqueada{% endif %}">
+      <h2 class="form-secao__titulo">
+        💶 Dados do Pagamento
+        {% if pag_pago %}
+          <span class="bloqueado-badge">🔒 Bloqueado</span>
+        {% endif %}
+      </h2>
 
       {% for field in form_pagamento %}
-        <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+        <div class="form-grupo
+             {% if field.errors %}form-grupo--erro{% endif %}
+             {% if pag_pago %}form-grupo--bloqueado{% endif %}">
           <label for="{{ field.id_for_label }}">
             {{ field.label }}
-            <span class="obrigatorio">*</span>
+            {% if not pag_pago %}
+              <span class="obrigatorio">*</span>
+            {% endif %}
           </label>
           {{ field }}
           {% for erro in field.errors %}
@@ -88,6 +128,8 @@
   </div>
 
 </form>
+
+{% include 'escola_musica/components/microfone.html' %}
 
 {% endblock %}
 

@@ -9,7 +9,11 @@ from django.contrib import messages
 from django.db import IntegrityError, DatabaseError
 
 from .models import Matricula, Pagamento, Aluno, Curso, Turma
-from .forms import MatriculaForm, PagamentoForm, PagamentoEdicaoForm, AlunoForm
+from .forms import (
+    MatriculaForm, MatriculaEdicaoForm,
+    PagamentoForm, PagamentoEdicaoForm,
+    AlunoForm, AlunoEdicaoForm
+)
 
 logger = logging.getLogger('escola_musica')
 
@@ -341,70 +345,128 @@ def matricula_detalhe(request, pk):
 
 @login_required
 def matricula_editar(request, pk):
-    matricula = get_object_or_404(Matricula, pk=pk)
-    pagamento = matricula.id_pagamento
+    """
+    Edição de matrícula.
+    - Mostra e permite editar dados pessoais do aluno
+    - Bloqueia campos financeiros se pagamento estiver Pago
+    - Valida data_pagamento >= data_matricula
+    - Redireciona para lista após sucesso
+    """
+    matricula  = get_object_or_404(Matricula, pk=pk)
+    pagamento  = matricula.id_pagamento
+    aluno      = matricula.id_aluno
+    pag_pago   = pagamento and pagamento.status == 'Pago'
 
-    form_matricula = MatriculaForm(
+    # Dados iniciais do aluno para pré-preencher o form
+    dados_aluno_iniciais = {
+        'nome':            aluno.nome            if aluno else '',
+        'email':           aluno.email           if aluno else '',
+        'telefone':        aluno.telefone        if aluno else '',
+        'data_nascimento': aluno.data_nascimento if aluno else None,
+    }
+
+    form_aluno = AlunoEdicaoForm(
+        request.POST or None,
+        initial=dados_aluno_iniciais
+    )
+    form_matricula = MatriculaEdicaoForm(
         request.POST or None,
         instance=matricula
     )
     form_pagamento = PagamentoEdicaoForm(
         request.POST or None,
         instance=pagamento,
-        utilizador=request.user      # ← passa utilizador
+        utilizador=request.user
     )
 
     if request.method == 'POST':
-        mat_valida = form_matricula.is_valid()
-        pag_valido = form_pagamento.is_valid()
+        aluno_valido = form_aluno.is_valid()
+        mat_valida   = form_matricula.is_valid()
+        pag_valido   = form_pagamento.is_valid()
 
-        if mat_valida and pag_valido:
-            try:
-                pag_actualizado = form_pagamento.save()
-                mat_actualizada = form_matricula.save(commit=False)
-                mat_actualizada.id_pagamento = pag_actualizado
-                mat_actualizada.save()
+        if aluno_valido and mat_valida and pag_valido:
 
-                messages.success(
-                    request,
-                    f"Matrícula #{matricula.id_matricula} actualizada com sucesso."
-                )
-                return redirect('matricula_detalhe', pk=matricula.pk)
+            # Validação cruzada: data_pagamento >= data_matricula
+            data_matricula = form_matricula.cleaned_data.get('data_matricula')
+            data_pagamento = form_pagamento.cleaned_data.get('data_pagamento')
 
-            except IntegrityError as e:
-                logger.error(
-                    f"IntegrityError ao editar pk={pk} | "
-                    f"user={request.user.username} | erro={e}"
-                )
-                messages.error(
-                    request,
-                    "Já existe uma matrícula com este aluno, curso e turma."
-                )
+            erro_datas = False
+            if data_matricula and data_pagamento:
+                if data_pagamento < data_matricula:
+                    form_pagamento.add_error(
+                        'data_pagamento',
+                        f"A data de pagamento "
+                        f"({data_pagamento.strftime('%d/%m/%Y')}) "
+                        f"não pode ser anterior à data de matrícula "
+                        f"({data_matricula.strftime('%d/%m/%Y')})."
+                    )
+                    erro_datas = True
 
-            except DatabaseError as e:
-                logger.error(
-                    f"DatabaseError ao editar pk={pk} | "
-                    f"user={request.user.username} | erro={e}"
-                )
-                messages.error(
-                    request,
-                    "Não foi possível actualizar. Tenta novamente."
-                )
+            if not erro_datas:
+                try:
+                    # Actualiza dados pessoais do aluno
+                    if aluno:
+                        cd_a = form_aluno.cleaned_data
+                        aluno.nome = cd_a['nome']
+                        if cd_a.get('email') is not None:
+                            aluno.email = cd_a['email']
+                        if cd_a.get('telefone') is not None:
+                            aluno.telefone = cd_a['telefone']
+                        if cd_a.get('data_nascimento') is not None:
+                            aluno.data_nascimento = cd_a['data_nascimento']
+                        aluno.save()
 
-            except Exception as e:
-                logger.error(
-                    f"Erro inesperado ao editar pk={pk} | "
-                    f"user={request.user.username} | erro={e}"
-                )
-                messages.error(request, "Erro inesperado. Contacta o administrador.")
+                    # Guarda pagamento e matrícula
+                    pag_actualizado      = form_pagamento.save()
+                    mat_actualizada      = form_matricula.save(commit=False)
+                    mat_actualizada.id_pagamento = pag_actualizado
+                    mat_actualizada.save()
 
+                    messages.success(
+                        request,
+                        f"Matrícula #{matricula.id_matricula} "
+                        "actualizada com sucesso."
+                    )
+                    # Redireciona para a LISTA (não para o detalhe)
+                    return redirect('matriculas_lista')
+
+                except IntegrityError as e:
+                    logger.error(
+                        f"IntegrityError ao editar pk={pk} | "
+                        f"user={request.user.username} | erro={e}"
+                    )
+                    messages.error(
+                        request,
+                        "Já existe uma matrícula com este aluno, "
+                        "curso e turma."
+                    )
+                except DatabaseError as e:
+                    logger.error(
+                        f"DatabaseError ao editar pk={pk} | "
+                        f"user={request.user.username} | erro={e}"
+                    )
+                    messages.error(
+                        request,
+                        "Não foi possível actualizar. Tenta novamente."
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Erro inesperado ao editar pk={pk} | "
+                        f"user={request.user.username} | erro={e}"
+                    )
+                    messages.error(
+                        request,
+                        "Erro inesperado. Contacta o administrador."
+                    )
         else:
             messages.warning(request, "Corrige os erros antes de guardar.")
 
     return render(request, 'escola_musica/matricula_editar.html', {
+        'form_aluno':    form_aluno,
         'form_matricula': form_matricula,
         'form_pagamento': form_pagamento,
         'matricula':      matricula,
+        'pag_pago':       pag_pago,
     })
 
 @login_required
