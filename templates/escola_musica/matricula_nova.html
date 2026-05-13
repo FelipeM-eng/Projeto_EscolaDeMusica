@@ -156,6 +156,15 @@
 
 </form>
 
+{# Dados de turmas em JSON para filtro por curso no JS #}
+<script id="dados-turmas" type="application/json">
+  [
+    {% for t in turmas_json %}
+      {"id": {{ t.id_turma }}, "nome": "{{ t.nome_turma|escapejs }}", "curso_id": {{ t.id_curso_id }}}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
 {% include 'escola_musica/components/microfone.html' %}
 
 {% endblock %}
