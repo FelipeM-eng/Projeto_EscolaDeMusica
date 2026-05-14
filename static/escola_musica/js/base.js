@@ -39,4 +39,38 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // Seleciona todos os cards que devem funcionar como link
+    const cards = document.querySelectorAll('.card-link');
+
+    cards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Pega a URL que o Django gerou no atributo data-url
+            const url = this.getAttribute('data-url');
+            
+            if (url) {
+                window.location.href = url;
+            }
+        });
+    });
+
+
+  /* ── Redirecionamento Seguro de Cards ── */
+  document.addEventListener('click', function(e) {
+    // Verifica se o clique foi no card-link ou em algo dentro dele
+    const card = e.target.closest('.card-link');
+    
+    if (card) {
+      const url = card.getAttribute('data-url');
+      
+      // VALIDAÇÃO DE SEGURANÇA:
+      // Verifica se a URL começa com "/" (garante que é um link interno do seu Django)
+      if (url && url.startsWith('/')) {
+        window.location.href = url;
+      } else {
+        // Caso alguém tente injetar "https://google.com", o JS vai ignorar
+        console.warn("Redirecionamento bloqueado: Apenas links internos são permitidos.");
+      }
+    }
+  });
+
 });
