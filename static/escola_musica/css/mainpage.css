@@ -163,6 +163,7 @@
   padding: 2rem 3rem 4rem;
 }
 
+/* Aplica estilo tanto a div.card como a a.card */
 .card {
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
@@ -172,6 +173,12 @@
   text-align: center;
   backdrop-filter: blur(8px);
   transition: transform 0.3s ease, border-color 0.3s ease;
+
+  /* importante para links */
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
 }
 
 .card:hover {
@@ -179,7 +186,10 @@
   border-color: var(--cor-primaria);
 }
 
-.card__icone  { font-size: 2rem; margin-bottom: 0.75rem; }
+.card__icone {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
 
 .card__titulo {
   font-family: var(--fonte-titulo);

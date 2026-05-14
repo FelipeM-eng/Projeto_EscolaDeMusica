@@ -160,7 +160,7 @@
       <span class="nav__logo-icone">🎵</span>
       Escola de Música
     </div>
-    <a href="{% url 'login' %}" class="btn-login">♪ Login</a>
+    <!--<a href="{% url 'login' %}" class="btn-login">♪ Login</a>-->
   </nav>
 
   <!-- Secção principal -->
@@ -170,7 +170,7 @@
       <span>aqui.</span>
     </h1>
     <p class="hero__subtitulo">
-      Portal de gestão administrativa da escola de música.
+      Portal de gestão da escola de música.
     </p>
     <div class="visualizador" aria-hidden="true">
       <div class="barra"></div><div class="barra"></div>
@@ -198,6 +198,14 @@
       <div class="card__icone">🎻</div>
       <div class="card__titulo">Professores</div>
       <p class="card__texto">Corpo docente especializado em múltiplas áreas.</p>
+    </div>
+    <!-- card Administração -->
+    <div class="card card-link" data-url="{% url 'login' %}" style="cursor: pointer;">
+        <div class="card__icone">🔐</div>
+        <div class="card__titulo">Administração</div>
+        <p class="card__texto">
+            Acesso ao portal administrativo da escola.
+        </p>
     </div>
   </section>
 
