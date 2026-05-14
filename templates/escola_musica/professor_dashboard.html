@@ -1,0 +1,25 @@
+{% extends 'escola_musica/base.html' %}
+{% load static %}
+
+{% block titulo %}Dashboard — Professor{% endblock %}
+
+{% block css_extra %}
+  <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Bem-vindo, {{ professor.nome }}</h1>
+    <p class="pagina-subtitulo">Área reservada ao professor</p>
+  </div>
+</div>
+
+<div class="estado-vazio">
+  <div class="estado-vazio__icone">🎻</div>
+  <p class="estado-vazio__texto">
+    O teu dashboard está em construção.<br>
+    Em breve poderás consultar as tuas turmas e aulas aqui.
+  </p>
+</div>
+{% endblock %}

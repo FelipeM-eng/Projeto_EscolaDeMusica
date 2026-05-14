@@ -12,10 +12,20 @@ from .models import Matricula, Pagamento, Aluno, Curso, Turma
 from .forms import (
     MatriculaForm, MatriculaEdicaoForm,
     PagamentoForm, PagamentoEdicaoForm,
-    AlunoForm, AlunoEdicaoForm
+    AlunoForm, AlunoEdicaoForm, EmailLoginForm
 )
 
 logger = logging.getLogger('escola_musica')
+
+# rever isto depois de implementar a autenticação por email:
+from .utils import (
+    utilizador_e_recepcao,
+    utilizador_pode_eliminar,
+    utilizador_pode_editar_financeiro,
+    pagamento_e_protegido,
+    associar_user_aluno,
+    associar_user_professor,
+)
 
 
 # ─────────────────────────────────────────
@@ -27,24 +37,34 @@ def mainpage(request):
 
 
 def login_view(request):
+    """
+    Login administrativo — para admins e staff.
+    Campo: email + password.
+    Redireciona para /matriculas/ após login.
+    """
     if request.user.is_authenticated:
-        return redirect('matriculas_lista')
+        return _redirecionar_por_perfil(request.user)
 
     form = AuthenticationForm(request, data=request.POST or None)
+
+    # Altera label do campo username para Email
+    form.fields['username'].label = 'Email'
     form.fields['username'].widget.attrs.update({
-        'placeholder':  'Nome de utilizador',
-        'autocomplete': 'username',
-        'class':        'campo-input',    # ← garante que esta linha existe
+        'placeholder':  'O teu email',
+        'autocomplete': 'email',
+        'type':         'email',
+        'class':        'campo-input',
     })
     form.fields['password'].widget.attrs.update({
         'placeholder':  '••••••••',
         'autocomplete': 'current-password',
-        'class':        'campo-input',    # ← garante que esta linha existe
+        'class':        'campo-input',
     })
 
     if request.method == 'POST' and form.is_valid():
-        login(request, form.get_user())
-        return redirect('matriculas_lista')
+        user = form.get_user()
+        login(request, user)
+        return _redirecionar_por_perfil(user)
 
     return render(request, 'escola_musica/login.html', {'form': form})
 
@@ -54,7 +74,102 @@ def logout_view(request):
     logout(request)
     return redirect('mainpage')
 
+# ─────────────────────────────────────────
+# DASHBOARDS DE ALUNOS E PROFESSORES
+# ─────────────────────────────────────────
 
+def _redirecionar_por_perfil(user):
+    """
+    Redireciona o utilizador para a área correcta
+    com base no seu perfil/grupo.
+    """
+    # Verifica se é aluno
+    if hasattr(user, 'aluno'):
+        return redirect('aluno_dashboard')
+
+    # Verifica se é professor
+    if hasattr(user, 'professor'):
+        return redirect('professor_dashboard')
+
+    # Admin/staff/superutilizador
+    return redirect('matriculas_lista')
+
+
+def login_aluno(request):
+    """Login para alunos — usa EmailLoginForm (S4 cumprido)."""
+    if request.user.is_authenticated:
+        return _redirecionar_por_perfil(request.user)
+
+    form = EmailLoginForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        email    = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+
+        from django.contrib.auth import authenticate
+        user = authenticate(request, username=email, password=password)
+
+        if user is not None:
+            if hasattr(user, 'aluno'):
+                login(request, user)
+                return redirect('aluno_dashboard')
+            else:
+                form.add_error(None, "Email ou palavra-passe incorrectos.")
+
+    return render(request, 'escola_musica/login_aluno.html', {'form': form})
+
+
+def login_professor(request):
+    """Login para professores — usa EmailLoginForm (S4 cumprido)."""
+    if request.user.is_authenticated:
+        return _redirecionar_por_perfil(request.user)
+
+    form = EmailLoginForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        email    = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+
+        from django.contrib.auth import authenticate
+        user = authenticate(request, username=email, password=password)
+
+        if user is not None:
+            if hasattr(user, 'professor'):
+                login(request, user)
+                return redirect('professor_dashboard')
+            else:
+                form.add_error(None, "Esta conta não pertence a um professor.")
+        else:
+            form.add_error(None, "Email ou palavra-passe incorrectos.")
+
+    return render(request, 'escola_musica/login_professor.html', {'form': form})
+
+
+@login_required
+def aluno_dashboard(request):
+    """Dashboard placeholder para alunos."""
+    # Verifica que é realmente um aluno
+    if not hasattr(request.user, 'aluno'):
+        messages.error(request, "Acesso restrito a alunos.")
+        return redirect('login_aluno')
+
+    aluno = request.user.aluno
+    return render(request, 'escola_musica/aluno_dashboard.html', {
+        'aluno': aluno,
+    })
+
+
+@login_required
+def professor_dashboard(request):
+    """Dashboard placeholder para professores."""
+    if not hasattr(request.user, 'professor'):
+        messages.error(request, "Acesso restrito a professores.")
+        return redirect('login_professor')
+
+    professor = request.user.professor
+    return render(request, 'escola_musica/professor_dashboard.html', {
+        'professor': professor,
+    })
 
 # ─────────────────────────────────────────
 # ÁREA PROTEGIDA
@@ -135,6 +250,13 @@ def matricula_nova(request):
                         'data_nascimento': cd_a.get('data_nascimento'),
                     }
                 )
+
+                # Associa User ao aluno automaticamente
+                # (cria User se não existir, usando o email do aluno)
+                if aluno.email:
+                    associar_user_aluno(aluno)
+
+                
 
             except Aluno.MultipleObjectsReturned:
                 # Se existir mais do que um aluno com o mesmo nome,

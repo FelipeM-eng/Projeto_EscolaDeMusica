@@ -1,10 +1,10 @@
-[ERROR] 2026-05-06 02:45:11,095 views: DatabaseError ao criar matrícula | user=admin | erro=Pagamento não está regularizado!
+[ERROR] 2026-05-06 02:45:11,095 views: DatabaseError ao criar matrï¿½cula | user=admin | erro=Pagamento nï¿½o estï¿½ regularizado!
 CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 
-[ERROR] 2026-05-08 11:08:40,252 views: DatabaseError ao confirmar matrícula | user=admin | erro=Pagamento não está regularizado!
+[ERROR] 2026-05-08 11:08:40,252 views: DatabaseError ao confirmar matrï¿½cula | user=admin | erro=Pagamento nï¿½o estï¿½ regularizado!
 CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 
-[ERROR] 2026-05-12 10:35:07,268 views: DatabaseError ao confirmar | user=admin | erro=Pagamento não está regularizado!
+[ERROR] 2026-05-12 10:35:07,268 views: DatabaseError ao confirmar | user=admin | erro=Pagamento nï¿½o estï¿½ regularizado!
 CONTEXT:  PL/pgSQL function verifica_pagamento() line 4 at RAISE
 
 [ERROR] 2026-05-13 16:12:20,277 views: IntegrityError ao editar pk=15 | user=admin | erro=duplicate key value violates unique constraint "matricula_unique"

@@ -1,15 +1,25 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Professor(models.Model):
-    id_professor = models.AutoField(primary_key=True)
-    nome = models.CharField(max_length=100)
-    email = models.CharField(max_length=120, null=True, blank=True)
-    telefone = models.CharField(max_length=20, null=True, blank=True)
+    id_professor    = models.AutoField(primary_key=True)
+    nome            = models.CharField(max_length=100)
+    email           = models.CharField(max_length=120, null=True, blank=True)
+    telefone        = models.CharField(max_length=20, null=True, blank=True)
     data_contratacao = models.DateField(null=True, blank=True)
+    # Liga ao utilizador Django — adicionado via SQL (managed=False)
+    user            = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='user_id',
+        related_name='professor',
+    )
 
     class Meta:
-        managed = False
+        managed  = False
         db_table = 'professor'
 
     def __str__(self):
@@ -151,14 +161,23 @@ class Turma(models.Model):
 
 
 class Aluno(models.Model):
-    id_aluno = models.AutoField(primary_key=True)
-    nome = models.CharField(max_length=100, null=True, blank=True)
-    email = models.CharField(max_length=120, null=True, blank=True)
-    telefone = models.CharField(max_length=20, null=True, blank=True)
+    id_aluno        = models.AutoField(primary_key=True)
+    nome            = models.CharField(max_length=100, null=True, blank=True)
+    email           = models.CharField(max_length=120, null=True, blank=True)
+    telefone        = models.CharField(max_length=20, null=True, blank=True)
     data_nascimento = models.DateField(null=True, blank=True)
+    # Liga ao utilizador Django — adicionado via SQL (managed=False)
+    user            = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='user_id',
+        related_name='aluno',
+    )
 
     class Meta:
-        managed = False
+        managed  = False
         db_table = 'alunos'
 
     def __str__(self):
