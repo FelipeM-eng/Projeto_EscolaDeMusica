@@ -394,19 +394,20 @@ class AlunoForm(forms.Form):
     )
 
     email = forms.CharField(
-        label='Email',
-        max_length=120,
-        required=False,
-        widget=forms.EmailInput(attrs={
-            'class':        'campo-input',
-            'placeholder':  'Ex: joao.silva@email.com',
-            'autocomplete': 'off',
-            'maxlength':    '120',
-        }),
-        error_messages={
-            'max_length': 'O email não pode ter mais de 120 caracteres.',
-        },
-    )
+    label='Email',
+    max_length=120,
+    required=True,   # ← obrigatório agora
+    widget=forms.EmailInput(attrs={
+        'class':        'campo-input',
+        'placeholder':  'Ex: joao.silva@email.com',
+        'autocomplete': 'off',
+        'maxlength':    '120',
+    }),
+    error_messages={
+        'required': 'O email do aluno é obrigatório para criar a conta de acesso.',
+        'max_length': 'O email não pode ter mais de 120 caracteres.',
+    },
+)
 
     telefone = forms.CharField(
         label='Telefone',
@@ -484,12 +485,13 @@ class AlunoForm(forms.Form):
     def clean_email(self):
         valor = self.cleaned_data.get('email', '')
 
-        if not valor:
-            return None  # campo opcional
+        if not valor or not valor.strip():
+            raise ValidationError(
+                "O email é obrigatório para criar a conta de acesso do aluno."
+            )
 
         valor = _sanitizar_texto(valor).lower()
 
-        # Valida formato de email com o validator do Django
         try:
             validate_email(valor)
         except ValidationError:
@@ -497,7 +499,6 @@ class AlunoForm(forms.Form):
                 "Introduz um endereço de email válido (ex: nome@dominio.com)."
             )
 
-        # Bloqueia caracteres de injecção no email
         chars_proibidos = ['<', '>', '{', '}', ';', '\'', '"', '\\']
         for char in chars_proibidos:
             if char in valor:
@@ -963,3 +964,42 @@ class MatriculaEdicaoForm(MatriculaForm):
         if ano is None:
             raise ValidationError("O ano letivo é obrigatório.")
         return ano    
+
+class EmailLoginForm(forms.Form):
+    """
+    Formulário de login por email para alunos e professores.
+    Valida e sanitiza email e password antes de autenticar.
+    """
+    email = forms.EmailField(
+        label='Email',
+        max_length=254,
+        widget=forms.EmailInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  'O teu email',
+            'autocomplete': 'email',
+            'required':     True,
+        }),
+        error_messages={
+            'required': 'O email é obrigatório.',
+            'invalid':  'Introduz um email válido.',
+        },
+    )
+
+    password = forms.CharField(
+        label='Palavra-passe',
+        widget=forms.PasswordInput(attrs={
+            'class':        'campo-input',
+            'placeholder':  '••••••••',
+            'autocomplete': 'current-password',
+            'required':     True,
+        }),
+        error_messages={
+            'required': 'A palavra-passe é obrigatória.',
+        },
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if not email:
+            raise ValidationError("O email é obrigatório.")
+        return email

@@ -90,6 +90,14 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/matriculas/'
 LOGOUT_REDIRECT_URL = '/'
 
+# ─── BACKENDS DE AUTENTICAÇÃO ────────────────────────────────────────────────
+AUTHENTICATION_BACKENDS = [
+    # Backend customizado — autentica por email
+    'escola_musica.auth_backends.EmailBackend',
+    # Backend nativo — mantém compatibilidade com admin Django
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # ─── HEADERS DE SEGURANÇA HTTP ────────────────────────────────────────────────
 # Ativa em produção (DEBUG=False). Em desenvolvimento local podem ser False.
 SECURE_BROWSER_XSS_FILTER = True
@@ -143,3 +151,4 @@ LOGGING = {
 }
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+

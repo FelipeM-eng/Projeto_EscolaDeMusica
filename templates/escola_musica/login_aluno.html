@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área do Aluno — Escola de Música</title>
+  <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/login.css' %}">
+</head>
+<body>
+
+<div class="login-pagina">
+  <div class="login-caixa">
+
+    <div class="login-caixa__icone">🎓</div>
+    <h1 class="login-caixa__titulo">Área do Aluno</h1>
+    <p class="login-caixa__subtitulo">Inicia sessão com o teu email</p>
+
+    {% if erro %}
+      <div class="erros" role="alert">{{ erro }}</div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+  <div class="erros" role="alert">
+    {% for erro in form.non_field_errors %}
+      <p>{{ erro }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<form method="POST" action="{% url 'login_aluno' %}" novalidate>
+  {% csrf_token %}
+
+  <div class="form-grupo {% if form.email.errors %}form-grupo--erro{% endif %}">
+    <label for="{{ form.email.id_for_label }}">Email</label>
+    {{ form.email }}
+    {% for erro in form.email.errors %}
+      <span class="form-erro" role="alert">
+        <span class="form-erro__icone">!</span>{{ erro }}
+      </span>
+    {% endfor %}
+  </div>
+
+  <div class="form-grupo {% if form.password.errors %}form-grupo--erro{% endif %}">
+    <label for="{{ form.password.id_for_label }}">Palavra-passe</label>
+    {{ form.password }}
+    {% for erro in form.password.errors %}
+      <span class="form-erro" role="alert">
+        <span class="form-erro__icone">!</span>{{ erro }}
+      </span>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn-entrar">Entrar</button>
+</form>
+
+    <a href="{% url 'mainpage' %}" class="login-voltar">← Voltar à página principal</a>
+
+  </div>
+</div>
+
+<script src="{% static 'escola_musica/js/base.js' %}"></script>
+</body>
+</html>
