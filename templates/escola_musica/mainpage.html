@@ -184,21 +184,29 @@
 
   <!-- Cards informativos -->
   <section class="cards">
-    <div class="card">
-      <div class="card__icone">🎓</div>
-      <div class="card__titulo">Alunos</div>
-      <p class="card__texto">Gestão de inscrições e matrículas em cursos e turmas.</p>
+    
+    <div class="card card-link" data-url="{% url 'login_aluno' %}" style="cursor: pointer;">
+        <div class="card__icone">🎓</div>
+        <div class="card__titulo">Alunos</div>
+        <p class="card__texto">
+            Gestão de inscrições e matrículas em cursos e turmas.
+        </p>
     </div>
+
     <div class="card">
       <div class="card__icone">🎹</div>
       <div class="card__titulo">Cursos</div>
       <p class="card__texto">Oferta formativa em vários instrumentos e níveis.</p>
     </div>
-    <div class="card">
-      <div class="card__icone">🎻</div>
-      <div class="card__titulo">Professores</div>
-      <p class="card__texto">Corpo docente especializado em múltiplas áreas.</p>
+
+    <div class="card card-link" data-url="{% url 'login_professor' %}" style="cursor: pointer;">
+        <div class="card__icone">🎻</div>
+        <div class="card__titulo">Professores</div>
+        <p class="card__texto">
+            Corpo docente especializado em múltiplas áreas.
+        </p>
     </div>
+
     <!-- card Administração -->
     <div class="card card-link" data-url="{% url 'login' %}" style="cursor: pointer;">
         <div class="card__icone">🔐</div>

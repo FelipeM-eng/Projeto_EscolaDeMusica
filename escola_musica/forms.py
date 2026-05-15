@@ -592,7 +592,7 @@ class AlunoEdicaoForm(forms.Form):
         required=False,
         widget=forms.EmailInput(attrs={
             'class':        'campo-input',
-            'placeholder':  'Ex: joao.silva@email.com',
+            'placeholder':  'Ex: exemplo@email.com',
             'autocomplete': 'off',
         }),
     )
@@ -975,7 +975,7 @@ class EmailLoginForm(forms.Form):
         max_length=254,
         widget=forms.EmailInput(attrs={
             'class':        'campo-input',
-            'placeholder':  'O teu email',
+            'placeholder':  'email@exemplo.com',
             'autocomplete': 'email',
             'required':     True,
         }),
