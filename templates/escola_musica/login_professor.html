@@ -7,6 +7,7 @@
   <title>Área do Professor — Escola de Música</title>
   <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
   <link rel="stylesheet" href="{% static 'escola_musica/css/login.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/formularios.css' %}">
 </head>
 <body>
 
@@ -18,36 +19,50 @@
     <p class="login-caixa__subtitulo">Inicia sessão com o teu email</p>
 
     {% if erro %}
-      <div class="erros" role="alert">{{ erro }}</div>
+      <div class="form-secao__erro-global" role="alert">
+        <div class="form-erro">
+          <span class="form-erro__icone">!</span>
+          {{ erro }}
+        </div>
+      </div>
     {% endif %}
 
     {% if form.non_field_errors %}
-  <div class="erros" role="alert">
-    {% for erro in form.non_field_errors %}
-      <p>{{ erro }}</p>
-    {% endfor %}
-  </div>
-{% endif %}
+        <div class="form-secao__erro-global">
+          {% for erro in form.non_field_errors %}
+            <div class="form-erro">
+              <span class="form-erro__icone">!</span>
+              {{ erro }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
 
 <form method="POST" action="{% url 'login_professor' %}" novalidate>
   {% csrf_token %}
 
+  <!-- EMAIL -->
   <div class="form-grupo {% if form.email.errors %}form-grupo--erro{% endif %}">
     <label for="{{ form.email.id_for_label }}">Email</label>
     {{ form.email }}
+
     {% for erro in form.email.errors %}
       <span class="form-erro" role="alert">
-        <span class="form-erro__icone">!</span>{{ erro }}
+        <span class="form-erro__icone">!</span>
+        {{ erro }}
       </span>
     {% endfor %}
   </div>
 
+  <!-- PASSWORD -->
   <div class="form-grupo {% if form.password.errors %}form-grupo--erro{% endif %}">
     <label for="{{ form.password.id_for_label }}">Palavra-passe</label>
     {{ form.password }}
+
     {% for erro in form.password.errors %}
       <span class="form-erro" role="alert">
-        <span class="form-erro__icone">!</span>{{ erro }}
+        <span class="form-erro__icone">!</span>
+        {{ erro }}
       </span>
     {% endfor %}
   </div>

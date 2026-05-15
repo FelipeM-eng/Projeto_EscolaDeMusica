@@ -8,6 +8,7 @@
   <title>Entrar — Escola de Música</title>
   <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
   <link rel="stylesheet" href="{% static 'escola_musica/css/login.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/formularios.css' %}">
 </head>
 <body>
 
@@ -21,31 +22,43 @@
 
       <!-- Erros de autenticação -->
       {% if form.non_field_errors %}
-        <div class="erros" role="alert">
+        <div class="form-secao__erro-global">
           {% for erro in form.non_field_errors %}
-            <p>{{ erro }}</p>
+            <div class="form-erro">
+              <span class="form-erro__icone">!</span>
+              {{ erro }}
+            </div>
           {% endfor %}
         </div>
       {% endif %}
 
-      <!-- Formulário de login -->
       <form id="form-login" method="POST" action="{% url 'login' %}" novalidate>
         {% csrf_token %}
 
-        <div class="form-grupo">
+        <!-- Username -->
+        <div class="form-grupo {% if form.username.errors %}form-grupo--erro{% endif %}">
           <label for="{{ form.username.id_for_label }}">Utilizador</label>
           {{ form.username }}
-          {% if form.username.errors %}
-            <div class="erros">{{ form.username.errors }}</div>
-          {% endif %}
+
+          {% for erro in form.username.errors %}
+            <span class="form-erro" role="alert">
+              <span class="form-erro__icone">!</span>
+              {{ erro }}
+            </span>
+          {% endfor %}
         </div>
 
-        <div class="form-grupo">
+        <!-- Password -->
+        <div class="form-grupo {% if form.password.errors %}form-grupo--erro{% endif %}">
           <label for="{{ form.password.id_for_label }}">Palavra-passe</label>
           {{ form.password }}
-          {% if form.password.errors %}
-            <div class="erros">{{ form.password.errors }}</div>
-          {% endif %}
+
+          {% for erro in form.password.errors %}
+            <span class="form-erro" role="alert">
+              <span class="form-erro__icone">!</span>
+              {{ erro }}
+            </span>
+          {% endfor %}
         </div>
 
         <button type="submit" class="btn-entrar">Entrar</button>

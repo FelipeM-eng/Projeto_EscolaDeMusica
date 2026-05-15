@@ -47,10 +47,18 @@ def login_view(request):
 
     form = AuthenticationForm(request, data=request.POST or None)
 
+    form.fields['username'].error_messages.update({
+    'required': 'O email é obrigatório.'
+    })
+
+    form.fields['password'].error_messages.update({
+        'required': 'A palavra-passe é obrigatória.'
+    })
+
     # Altera label do campo username para Email
     form.fields['username'].label = 'Email'
     form.fields['username'].widget.attrs.update({
-        'placeholder':  'O teu email',
+        'placeholder':  'Username ou email',
         'autocomplete': 'email',
         'type':         'email',
         'class':        'campo-input',
@@ -114,7 +122,9 @@ def login_aluno(request):
                 login(request, user)
                 return redirect('aluno_dashboard')
             else:
-                form.add_error(None, "Email ou palavra-passe incorrectos.")
+                form.add_error(None, "Dados de acesso inválidos.")
+        else:
+            form.add_error(None, "Email ou palavra-passe incorrectos.")
 
     return render(request, 'escola_musica/login_aluno.html', {'form': form})
 
@@ -138,7 +148,7 @@ def login_professor(request):
                 login(request, user)
                 return redirect('professor_dashboard')
             else:
-                form.add_error(None, "Esta conta não pertence a um professor.")
+                form.add_error(None, "Dados de acesso inválidos.")
         else:
             form.add_error(None, "Email ou palavra-passe incorrectos.")
 
