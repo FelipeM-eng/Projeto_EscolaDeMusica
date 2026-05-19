@@ -1,0 +1,277 @@
+{% extends 'gestao/base.html' %}
+{% load static %}
+
+{% block titulo %}Utilizadores{% endblock %}
+
+{% block conteudo %}
+
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Utilizadores</h1>
+    <p class="pagina-subtitulo">
+      Gestão de contas e permissões
+    </p>
+  </div>
+  {% if request.user.is_superuser or request.user.is_staff %}
+    <a href="{% url 'gestao_utilizador_criar' %}" class="btn-primario">
+      + Novo utilizador
+    </a>
+  {% endif %}
+</div>
+
+<!-- ── Filtros e pesquisa ── -->
+<form method="GET" action="{% url 'gestao_lista' %}" id="form-filtros">
+  <div class="gestao-filtros">
+
+    <div class="gestao-filtros__grupo" style="flex:1;min-width:200px;">
+      <label class="gestao-filtros__label">Pesquisa</label>
+      <input type="text"
+             name="q"
+             value="{{ pesquisa }}"
+             placeholder="Username, email ou nome..."
+             class="gestao-filtros__input"
+             autocomplete="off">
+    </div>
+
+    <div class="gestao-filtros__grupo">
+      <label class="gestao-filtros__label">Estado</label>
+      <select name="estado" class="gestao-filtros__select">
+        <option value="">Todos</option>
+        <option value="activo"   {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
+        <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+      </select>
+    </div>
+
+    <div class="gestao-filtros__grupo">
+      <label class="gestao-filtros__label">Perfil</label>
+      <select name="perfil" class="gestao-filtros__select">
+        <option value="">Todos</option>
+        <option value="aluno"     {% if filtro_perfil == 'aluno' %}selected{% endif %}>Aluno</option>
+        <option value="professor" {% if filtro_perfil == 'professor' %}selected{% endif %}>Professor</option>
+        <option value="sem_perfil" {% if filtro_perfil == 'sem_perfil' %}selected{% endif %}>Sem perfil</option>
+      </select>
+    </div>
+
+    <div class="gestao-filtros__grupo">
+      <label class="gestao-filtros__label">Grupo</label>
+      <select name="grupo" class="gestao-filtros__select">
+        <option value="">Todos</option>
+        {% for g in grupos_disponiveis %}
+          <option value="{{ g.name }}"
+                  {% if filtro_grupo == g.name %}selected{% endif %}>
+            {{ g.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="gestao-filtros__btn">Filtrar</button>
+
+    {% if pesquisa or filtro_estado or filtro_perfil or filtro_grupo %}
+      <a href="{% url 'gestao_lista' %}" class="gestao-filtros__limpar">
+        Limpar filtros
+      </a>
+    {% endif %}
+
+  </div>
+</form>
+
+<!-- ── Resumo de resultados ── -->
+<p class="gestao-resumo">
+  A mostrar <strong>{{ pagina.object_list|length }}</strong>
+  de <strong>{{ total }}</strong> utilizador{{ total|pluralize:",es" }}
+  {% if pesquisa %}para "<strong>{{ pesquisa }}</strong>"{% endif %}
+</p>
+
+<!-- ── Tabela ── -->
+{% if pagina.object_list %}
+  <div class="tabela-wrapper gestao-tabela">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Utilizador</th>
+          <th>Email</th>
+          <th>Grupos</th>
+          <th>Perfil</th>
+          <th>Estado</th>
+          <th class="th-acao">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in pagina.object_list %}
+        <tr class="tabela__linha">
+
+          <td>
+            <span class="aluno-nome">{{ u.username }}</span>
+            {% if u.is_superuser %}
+              <span class="badge badge--pago">super</span>
+            {% elif u.is_staff %}
+              <span class="badge badge--pendente">staff</span>
+            {% endif %}
+          </td>
+
+          <td>{{ u.email|default:"—" }}</td>
+
+          <td>
+            {% for g in u.groups.all %}
+              <span class="badge">{{ g.name }}</span>
+            {% empty %}
+              <span class="texto-suave">—</span>
+            {% endfor %}
+          </td>
+
+          <td>
+            {% if u.aluno %}
+              <span class="badge badge--pago">
+                Aluno: {{ u.aluno.nome }}
+              </span>
+            {% elif u.professor %}
+              <span class="badge badge--pendente">
+                Prof: {{ u.professor.nome }}
+              </span>
+            {% else %}
+              <span class="texto-suave">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if u.is_active %}
+              <span class="badge badge--pago">Activo</span>
+            {% else %}
+              <span class="badge badge--cancelado">Inactivo</span>
+            {% endif %}
+          </td>
+
+          <td class="acoes-celula">
+            <!-- Editar -->
+            <a href="{% url 'gestao_utilizador_editar' u.pk %}"
+               class="btn-acao btn-acao--editar">
+              Editar
+            </a>
+
+            <!-- Grupos -->
+            <a href="{% url 'gestao_utilizador_grupos' u.pk %}"
+               class="btn-acao btn-acao--grupos">
+              Grupos
+            </a>
+
+            <!-- Activar / Desactivar -->
+            <form method="POST"
+                  action="{% url 'gestao_utilizador_toggle' u.pk %}"
+                  style="display:inline"
+                  class="form-confirmacao"
+                  data-mensagem="{% if u.is_active %}Desactivar{% else %}Activar{% endif %} a conta de '{{ u.username }}'?">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn-acao {% if u.is_active %}btn-acao--desactivar{% else %}btn-acao--activar{% endif %}">
+                {% if u.is_active %}Desactivar{% else %}Activar{% endif %}
+              </button>
+            </form>
+
+            <!-- Associar perfil (se sem perfil) -->
+            {% if not u.aluno and not u.professor and not u.is_staff and not u.is_superuser %}
+              <a href="{% url 'gestao_utilizador_associar' u.pk %}"
+                 class="btn-acao btn-acao--associar">
+                Associar
+              </a>
+            {% endif %}
+
+            <!-- Remover associação aluno -->
+            {% if u.aluno %}
+              <form method="POST"
+                    action="{% url 'gestao_utilizador_remover' u.aluno.id_aluno %}"
+                    style="display:inline"
+                    class="form-confirmacao"
+                    data-mensagem="Remover associação do utilizador '{{ u.username }}' com o aluno '{{ u.aluno.nome }}'?">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="aluno">
+                <button type="submit" class="btn-acao btn-acao--desactivar">
+                  Remover perfil
+                </button>
+              </form>
+            {% endif %}
+
+            <!-- Remover associação professor -->
+            {% if u.professor %}
+              <form method="POST"
+                    action="{% url 'gestao_utilizador_remover' u.professor.id_professor %}"
+                    style="display:inline"
+                    class="form-confirmacao"
+                    data-mensagem="Remover associação do utilizador '{{ u.username }}' com o professor '{{ u.professor.nome }}'?">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="professor">
+                <button type="submit" class="btn-acao btn-acao--desactivar">
+                  Remover perfil
+                </button>
+              </form>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Paginação ── -->
+  {% if pagina.has_other_pages %}
+    <nav class="paginacao" aria-label="Paginação">
+
+      {% if pagina.has_previous %}
+        <a href="?pagina={{ pagina.previous_page_number }}&q={{ pesquisa }}&estado={{ filtro_estado }}&perfil={{ filtro_perfil }}&grupo={{ filtro_grupo }}"
+           class="paginacao__btn">←</a>
+      {% else %}
+        <span class="paginacao__btn paginacao__btn--desactivado">←</span>
+      {% endif %}
+
+      {% for num in pagina.paginator.page_range %}
+        {% if pagina.number == num %}
+          <span class="paginacao__btn paginacao__btn--activo">{{ num }}</span>
+        {% elif num > pagina.number|add:'-3' and num < pagina.number|add:'3' %}
+          <a href="?pagina={{ num }}&q={{ pesquisa }}&estado={{ filtro_estado }}&perfil={{ filtro_perfil }}&grupo={{ filtro_grupo }}"
+             class="paginacao__btn">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if pagina.has_next %}
+        <a href="?pagina={{ pagina.next_page_number }}&q={{ pesquisa }}&estado={{ filtro_estado }}&perfil={{ filtro_perfil }}&grupo={{ filtro_grupo }}"
+           class="paginacao__btn">→</a>
+      {% else %}
+        <span class="paginacao__btn paginacao__btn--desactivado">→</span>
+      {% endif %}
+
+      <span class="paginacao__info">
+        Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}
+      </span>
+
+    </nav>
+  {% endif %}
+
+{% else %}
+  <div class="estado-vazio">
+    <div class="estado-vazio__icone">👤</div>
+    <p class="estado-vazio__texto">
+      {% if pesquisa or filtro_estado or filtro_perfil or filtro_grupo %}
+        Nenhum utilizador encontrado com os filtros aplicados.
+      {% else %}
+        Ainda não existem utilizadores registados.
+      {% endif %}
+    </p>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block js_extra %}
+<script>
+/* Confirmação antes de acções destrutivas */
+document.querySelectorAll('.form-confirmacao').forEach(function(form) {
+  form.addEventListener('submit', function(e) {
+    const msg = form.dataset.mensagem || 'Tens a certeza?';
+    if (!confirm(msg)) {
+      e.preventDefault();
+    }
+  });
+});
+</script>
+{% endblock %}

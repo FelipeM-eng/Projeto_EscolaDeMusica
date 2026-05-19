@@ -1,0 +1,99 @@
+{% extends 'gestao/base.html' %}
+{% load static %}
+
+{% block titulo %}Confirmar alterações — {{ utilizador.username }}{% endblock %}
+
+{% block conteudo %}
+
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Confirmar alterações</h1>
+    <p class="pagina-subtitulo">
+      Utilizador: <strong>{{ utilizador.username }}</strong>
+    </p>
+  </div>
+</div>
+
+<div class="eliminar-card"
+     style="max-width:560px;border-color:rgba(201,168,76,0.25);">
+
+  <!-- Cabeçalho do card -->
+  <div class="eliminar-card__aviso"
+       style="background:rgba(201,168,76,0.06);
+              border-color:rgba(201,168,76,0.15);">
+    <span class="eliminar-card__icone">⚠</span>
+    <div>
+      <p class="eliminar-card__titulo">
+        As seguintes alterações serão guardadas na base de dados:
+      </p>
+      <p class="eliminar-card__descricao">
+        Revê cuidadosamente antes de confirmar.
+        Esta acção não pode ser desfeita.
+      </p>
+    </div>
+  </div>
+
+  <!-- Lista de alterações detectadas -->
+  <div class="eliminar-card__dados">
+    <dl class="detalhe-lista">
+      {% for alt in alteracoes %}
+        <dt>{{ alt.campo }}</dt>
+        <dd>
+          <span class="texto-suave">{{ alt.antes }}</span>
+          <span style="margin:0 0.4rem;color:var(--cor-texto-suave);">→</span>
+          <strong>{{ alt.depois }}</strong>
+        </dd>
+      {% endfor %}
+    </dl>
+  </div>
+
+  <!-- Acções -->
+  <div class="eliminar-card__acoes">
+
+    <!-- Cancelar → volta ao form, session limpa -->
+    <form method="POST"
+          action="{% url 'gestao_utilizador_confirmar' utilizador.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="cancelar">
+      <button type="submit" class="btn-secundario">
+        ← Voltar ao form
+      </button>
+    </form>
+
+    <!-- Confirmar → grava na BD -->
+    <form method="POST"
+          action="{% url 'gestao_utilizador_confirmar' utilizador.pk %}"
+          id="form-confirmar-final">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="confirmar">
+      <button type="submit"
+              class="btn-eliminar-confirmar"
+              id="btn-confirmar-final"
+              style="border-color:rgba(201,168,76,0.5);
+                     color:var(--cor-primaria);
+                     background:rgba(201,168,76,0.1);">
+        Confirmar e guardar
+      </button>
+    </form>
+
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block js_extra %}
+<script>
+/* Feedback visual ao confirmar */
+var formConfirmar = document.getElementById('form-confirmar-final');
+if (formConfirmar) {
+  formConfirmar.addEventListener('submit', function () {
+    var btn = document.getElementById('btn-confirmar-final');
+    if (btn) {
+      btn.textContent = 'A guardar...';
+      btn.disabled    = true;
+    }
+  });
+}
+</script>
+{% endblock %}

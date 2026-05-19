@@ -1,0 +1,227 @@
+/* ═══════════════════════════════════════════════
+   GESTÃO DE UTILIZADORES — estilos específicos
+   Reutiliza variáveis do base.css
+═══════════════════════════════════════════════ */
+
+/* ── Navbar do painel ── */
+.gestao-navbar {
+  background: rgba(10, 10, 15, 0.98);
+  border-bottom: 2px solid rgba(123, 79, 166, 0.3);
+}
+
+.gestao-navbar__utilizador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+}
+
+/* ── Barra de pesquisa e filtros ── */
+.gestao-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.gestao-filtros__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 160px;
+}
+
+.gestao-filtros__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cor-texto-suave);
+}
+
+.gestao-filtros__input,
+.gestao-filtros__select {
+  padding: 0.55rem 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto);
+  font-size: 0.88rem;
+  font-family: var(--fonte-corpo);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.gestao-filtros__input:focus,
+.gestao-filtros__select:focus {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+}
+
+.gestao-filtros__select option {
+  background: #1a1a2e;
+}
+
+.gestao-filtros__btn {
+  padding: 0.55rem 1.2rem;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-primaria);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+.gestao-filtros__btn:hover {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--cor-primaria);
+}
+
+.gestao-filtros__limpar {
+  padding: 0.55rem 1rem;
+  background: transparent;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.gestao-filtros__limpar:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+/* ── Paginação ── */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.paginacao__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.6rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto-suave);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.paginacao__btn:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+.paginacao__btn--activo {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.paginacao__btn--desactivado {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.paginacao__info {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  margin: 0 0.5rem;
+}
+
+/* ── Tabela de utilizadores ── */
+.gestao-tabela .btn-acao {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  font-family: var(--fonte-corpo);
+  white-space: nowrap;
+}
+
+.btn-acao--editar {
+  border-color: rgba(79, 143, 166, 0.4);
+  color: #7ecfea;
+}
+.btn-acao--editar:hover {
+  background: rgba(79, 143, 166, 0.1);
+  border-color: #7ecfea;
+}
+
+.btn-acao--grupos {
+  border-color: rgba(123, 79, 166, 0.4);
+  color: rgba(180, 140, 220, 0.9);
+}
+.btn-acao--grupos:hover {
+  background: rgba(123, 79, 166, 0.1);
+  border-color: var(--cor-acento);
+}
+
+.btn-acao--activar {
+  border-color: rgba(50, 200, 100, 0.4);
+  color: #6fcf97;
+}
+.btn-acao--activar:hover {
+  background: rgba(50, 200, 100, 0.1);
+}
+
+.btn-acao--desactivar {
+  border-color: rgba(220, 50, 50, 0.35);
+  color: rgba(240, 128, 128, 0.85);
+}
+.btn-acao--desactivar:hover {
+  background: rgba(220, 50, 50, 0.1);
+  border-color: #f08080;
+}
+
+.btn-acao--associar {
+  border-color: rgba(201, 168, 76, 0.4);
+  color: var(--cor-primaria);
+}
+.btn-acao--associar:hover {
+  background: rgba(201, 168, 76, 0.1);
+}
+
+/* ── Resumo de resultados ── */
+.gestao-resumo {
+  font-size: 0.85rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 1rem;
+}
+
+.gestao-resumo strong {
+  color: var(--cor-texto);
+}
