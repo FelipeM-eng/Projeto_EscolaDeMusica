@@ -1,0 +1,82 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# =========================
+# Django
+# =========================
+db.sqlite3
+db.sqlite3-journal
+
+media/
+staticfiles/
+
+# Sessions / cache
+*.log
+
+# Django secret configs
+.env
+.env.*
+*.env
+
+# Local settings
+local_settings.py
+settings_local.py
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Testing / coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# Build / packaging
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# PostgreSQL local dumps
+# =========================
+*.sql
+*.dump
+*.backup
+
+# =========================
+# Sensitive files
+# =========================
+secrets.json
+credentials.json
+private_key.pem
+*.pem
+*.key
+*.crt

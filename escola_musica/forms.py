@@ -9,6 +9,10 @@ import unicodedata
 
 from .models import Matricula, Pagamento, Aluno, Curso, Turma
 
+
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.password_validation import validate_password
+
 DATA_MINIMA  = datetime.date(1900, 1, 1)
 ANO_ATUAL    = timezone.now().year
 

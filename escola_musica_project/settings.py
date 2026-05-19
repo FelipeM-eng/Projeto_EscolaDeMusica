@@ -20,6 +20,9 @@ INSTALLED_APPS = [
     'escola_musica',
 ]
 
+# ─── DJANGO-AXES — protecção contra brute force ───────────────────────────────
+INSTALLED_APPS += ['axes']
+
 # ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -27,6 +30,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',        # proteção CSRF ativa
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware', # Django Axes para proteção contra brute force
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -92,11 +96,30 @@ LOGOUT_REDIRECT_URL = '/'
 
 # ─── BACKENDS DE AUTENTICAÇÃO ────────────────────────────────────────────────
 AUTHENTICATION_BACKENDS = [
-    # Backend customizado — autentica por email
+    # Axes deve vir primeiro
+    'axes.backends.AxesStandaloneBackend',
+
+    # teu backend por email
     'escola_musica.auth_backends.EmailBackend',
-    # Backend nativo — mantém compatibilidade com admin Django
+
+    # mantém compatibilidade com Django Admin
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Bloqueia após 5 tentativas falhadas
+AXES_FAILURE_LIMIT     = 5
+# Janela de tempo: 15 minutos
+AXES_COOLOFF_TIME      = 0.25   # horas (15 min)
+# Bloqueia por IP + username (email)
+AXES_LOCKOUT_PARAMETERS = ['ip_address', 'username']
+# Não revela detalhes do bloqueio (account enumeration)
+AXES_LOCKOUT_TEMPLATE  = None
+# Mensagem genérica ao ser bloqueado
+AXES_LOCKOUT_CALLABLE  = None
+# Axes usa a BD para registar tentativas
+AXES_HANDLER           = 'axes.handlers.database.AxesDatabaseHandler'
+# reseta contador em login bem sucedido (mais seguro)
+AXES_RESET_ON_SUCCESS  = True
 
 # ─── HEADERS DE SEGURANÇA HTTP ────────────────────────────────────────────────
 # Ativa em produção (DEBUG=False). Em desenvolvimento local podem ser False.
@@ -148,6 +171,20 @@ LOGGING = {
             'propagate': False,
         },
     },
+}
+
+# ─── LOGGING DE AUDITORIA ─────────────────────────────────────────────────────
+# Adiciona handler de auditoria ao LOGGING existente
+LOGGING['handlers']['auditoria'] = {
+    'level':     'INFO',
+    'class':     'logging.FileHandler',
+    'filename':  BASE_DIR / 'logs' / 'auditoria.log',
+    'formatter': 'detalhadо',
+}
+LOGGING['loggers']['gestao_auditoria'] = {
+    'handlers':  ['auditoria', 'consola'],
+    'level':     'INFO',
+    'propagate': False,
 }
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

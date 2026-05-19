@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Negado — Gestão</title>
+  <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/login.css' %}">
+</head>
+<body>
+<div class="login-pagina">
+  <div class="login-caixa">
+    <div class="login-caixa__icone">🔒</div>
+    <h1 class="login-caixa__titulo">Acesso Negado</h1>
+    <p class="login-caixa__subtitulo">{{ mensagem }}</p>
+    <a href="{% url 'gestao_login' %}" class="btn-entrar"
+       style="display:block;text-align:center;margin-top:1rem;">
+      Voltar ao login
+    </a>
+  </div>
+</div>
+</body>
+</html>

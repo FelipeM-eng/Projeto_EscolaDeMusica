@@ -1,0 +1,313 @@
+{% extends 'gestao/base.html' %}
+{% load static %}
+
+{% block titulo %}Editar — {{ utilizador.username }}{% endblock %}
+
+{% block css_extra %}
+  <link rel="stylesheet" href="{% static 'escola_musica/css/modal.css' %}">
+{% endblock %}
+
+{% block conteudo %}
+
+<div class="pagina-cabecalho">
+  <div>
+    <h1 class="pagina-titulo">Editar — {{ utilizador.username }}</h1>
+    <p class="pagina-subtitulo">
+      Campos com <span class="obrigatorio">*</span> são obrigatórios.
+    </p>
+  </div>
+  <a href="{% url 'gestao_lista' %}" class="btn-secundario">← Cancelar</a>
+</div>
+
+<form method="POST"
+      action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+      novalidate
+      id="form-editar-utilizador">
+  {% csrf_token %}
+
+  <!-- Hidden fields de password — injectados pela modal JS -->
+  <!-- Nunca guardados em session — revalidados no backend -->
+  <input type="hidden" name="nova_password"      id="hidden-nova-password"      value="">
+  <input type="hidden" name="confirmar_password" id="hidden-confirmar-password" value="">
+
+  <div class="form-grid" style="grid-template-columns:1fr;">
+    <div class="form-secao" style="max-width:560px;">
+
+      <h2 class="form-secao__titulo">👤 Dados do utilizador</h2>
+
+      <!-- Campos de dados -->
+      {% for field in form_dados %}
+        <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+          <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}
+              <span class="obrigatorio">*</span>
+            {% endif %}
+          </label>
+          {{ field }}
+          {% for erro in field.errors %}
+            <span class="form-erro" role="alert">
+              <span class="form-erro__icone">!</span>{{ erro }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      {% if form_dados.non_field_errors %}
+        <div class="alerta alerta--error">
+          {% for erro in form_dados.non_field_errors %}
+            <p>{{ erro }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Erros de password vindos do backend -->
+      {% if form_password.non_field_errors %}
+        <div class="alerta alerta--error">
+          {% for erro in form_password.non_field_errors %}
+            <span class="form-erro" role="alert">
+              <span class="form-erro__icone">!</span>{{ erro }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Indicador: password foi preenchida na modal -->
+      <div id="indicador-password" style="display:none;margin-bottom:1rem;">
+        <div class="alerta alerta--info" style="align-items:center;">
+          <span class="alerta__texto">
+            🔒 Nova palavra-passe definida — será validada e alterada ao confirmar.
+          </span>
+          <button type="button"
+                  class="alerta__fechar"
+                  id="btn-limpar-password"
+                  title="Remover password">×</button>
+        </div>
+      </div>
+
+      <!-- Botão para abrir modal de password -->
+      <div style="margin-bottom:1.75rem;">
+        <button type="button"
+                class="btn-secundario"
+                id="btn-abrir-modal-password">
+          🔒 Mudar palavra-passe
+        </button>
+      </div>
+
+      <div class="form-acoes">
+        <button type="submit" class="btn-primario btn-grande" id="btn-guardar">
+          Seguinte — Verificar alterações →
+        </button>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+
+<!-- ══ MODAL DE PASSWORD — client-side ══ -->
+<!-- Apenas recolhe e injeta nos hidden fields -->
+<!-- Não persiste nada — validação real ocorre no backend -->
+<div class="modal-overlay"
+     id="modal-password"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-password-titulo"
+     style="display:none; pointer-events:none;">
+  <div class="modal">
+
+    <div class="modal__cabecalho">
+      <div class="modal__icone-alerta">🔒</div>
+      <h2 class="modal__titulo" id="modal-password-titulo">
+        Mudar palavra-passe
+      </h2>
+      <p class="modal__subtitulo">
+        A password só será alterada após confirmação final.
+        Nada é guardado ao clicar Aplicar.
+      </p>
+    </div>
+
+    <div class="modal__corpo">
+
+      <div id="modal-password-erro"
+           class="alerta alerta--error"
+           style="display:none;margin-bottom:1rem;"
+           role="alert">
+        <span id="modal-password-erro-texto"></span>
+      </div>
+
+      <div class="form-grupo" id="modal-grupo-p1">
+        <label for="modal-nova-password">
+          Nova palavra-passe
+          <span class="obrigatorio">*</span>
+        </label>
+        <input type="password"
+               id="modal-nova-password"
+               class="campo-input"
+               placeholder="••••••••"
+               autocomplete="new-password">
+      </div>
+
+      <div class="form-grupo" id="modal-grupo-p2">
+        <label for="modal-confirmar-password">
+          Confirmar nova palavra-passe
+          <span class="obrigatorio">*</span>
+        </label>
+        <input type="password"
+               id="modal-confirmar-password"
+               class="campo-input"
+               placeholder="••••••••"
+               autocomplete="new-password">
+      </div>
+
+    </div>
+
+    <div class="modal__rodape">
+      <button type="button" class="btn-secundario" id="btn-cancelar-modal">
+        Cancelar
+      </button>
+      <button type="button" class="btn-primario" id="btn-aplicar-password">
+        Aplicar
+      </button>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block js_extra %}
+<script>
+/* ══════════════════════════════════════════════════
+   MODAL DE PASSWORD — client-side
+   Responsabilidade: recolher e injectar nos hidden fields.
+   Validação real: backend (PasswordForm + validate_password).
+   Nada é persistido ao clicar Aplicar.
+══════════════════════════════════════════════════ */
+(function () {
+  var modal        = document.getElementById('modal-password');
+  var btnAbrir     = document.getElementById('btn-abrir-modal-password');
+  var btnCancelar  = document.getElementById('btn-cancelar-modal');
+  var btnAplicar   = document.getElementById('btn-aplicar-password');
+  var btnLimpar    = document.getElementById('btn-limpar-password');
+  var btnGuardar   = document.getElementById('btn-guardar');
+  var inputP1      = document.getElementById('modal-nova-password');
+  var inputP2      = document.getElementById('modal-confirmar-password');
+  var hiddenP1     = document.getElementById('hidden-nova-password');
+  var hiddenP2     = document.getElementById('hidden-confirmar-password');
+  var indicador    = document.getElementById('indicador-password');
+  var erroDiv      = document.getElementById('modal-password-erro');
+  var erroTexto    = document.getElementById('modal-password-erro-texto');
+
+  /* ── Helpers ── */
+  function mostrarErro(msg) {
+    erroTexto.textContent = msg;
+    erroDiv.style.display = '';
+  }
+
+  function limparErro() {
+    erroDiv.style.display = 'none';
+    erroTexto.textContent = '';
+  }
+
+  function abrirModal() {
+    inputP1.value = '';
+    inputP2.value = '';
+    limparErro();
+    modal.style.display       = 'flex';
+    modal.style.opacity       = '1';
+    modal.style.pointerEvents = 'all';
+    modal.classList.add('modal-overlay--visivel');
+    setTimeout(function () { inputP1.focus(); }, 50);
+  }
+
+  function fecharModal() {
+    modal.style.opacity       = '0';
+    modal.style.pointerEvents = 'none';
+    modal.classList.remove('modal-overlay--visivel');
+    setTimeout(function () { modal.style.display = 'none'; }, 300);
+  }
+
+  function limparPasswordHidden() {
+    hiddenP1.value          = '';
+    hiddenP2.value          = '';
+    indicador.style.display = 'none';
+  }
+
+  /* ── Eventos ── */
+  btnAbrir.addEventListener('click', abrirModal);
+
+  btnCancelar.addEventListener('click', function () {
+    /* Fecha sem aplicar — hidden fields não são alterados */
+    inputP1.value = '';
+    inputP2.value = '';
+    fecharModal();
+  });
+
+  btnLimpar.addEventListener('click', limparPasswordHidden);
+
+  /* Fechar ao clicar no overlay */
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) {
+      inputP1.value = '';
+      inputP2.value = '';
+      fecharModal();
+    }
+  });
+
+  /* Fechar com Escape */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      inputP1.value = '';
+      inputP2.value = '';
+      fecharModal();
+    }
+  });
+
+  /* Aplicar — validação mínima client-side antes de injectar */
+  btnAplicar.addEventListener('click', function () {
+    limparErro();
+    var p1 = inputP1.value;
+    var p2 = inputP2.value;
+
+    if (!p1 || !p2) {
+      mostrarErro('Preenche os dois campos.');
+      return;
+    }
+    if (p1 !== p2) {
+      mostrarErro('As palavras-passe não coincidem.');
+      return;
+    }
+    if (p1.length < 8) {
+      mostrarErro('Mínimo de 8 caracteres.');
+      return;
+    }
+
+    /* Injeta nos hidden fields — validação completa no backend */
+    hiddenP1.value = p1;
+    hiddenP2.value = p2;
+
+    /* Mostra indicador */
+    indicador.style.display = '';
+
+    /* Limpa campos da modal — não ficam em memória */
+    inputP1.value = '';
+    inputP2.value = '';
+
+    fecharModal();
+  });
+
+  /* Feedback visual ao submeter o form */
+  var formEditar = document.getElementById('form-editar-utilizador');
+  if (formEditar) {
+    formEditar.addEventListener('submit', function () {
+      if (btnGuardar) {
+        btnGuardar.textContent = 'A validar...';
+        btnGuardar.disabled    = true;
+      }
+    });
+  }
+
+})();
+</script>
+{% endblock %}

@@ -660,3 +660,21 @@ def matricula_eliminar(request, pk):
     return render(request, 'escola_musica/matricula_eliminar.html', {
         'matricula': matricula,
     })
+
+# ─────────────────────────────────────────
+# ENTRADA DO PAINEL DE GESTÃO
+# ─────────────────────────────────────────
+
+def gestao_redirect(request):
+    """
+    Ponto de entrada do painel de gestão.
+    Fluxo semelhante ao /admin do Django:
+
+    /gestaoutilizadores
+      ├── autenticado + staff/superuser → painel
+      └── não autenticado → login do painel
+    """
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('gestao_lista')
+
+    return redirect('gestao_login')

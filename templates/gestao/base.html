@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}Gestão{% endblock %} — Escola de Música</title>
+
+  <!-- CSS existente reutilizado -->
+  <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/formularios.css' %}">
+
+  <!-- CSS específico do painel -->
+  <link rel="stylesheet" href="{% static 'escola_musica/css/gestao.css' %}">
+
+  {% block css_extra %}{% endblock %}
+</head>
+<body class="pagina-protegida">
+
+  <!-- Navbar do painel — separada da navbar principal -->
+  <nav class="navbar gestao-navbar">
+    <div class="navbar__logo">
+      <a href="{% url 'gestao_lista' %}" class="navbar__logo">
+        ⚙️ Gestão de Utilizadores
+      </a>
+    </div>
+
+    <div class="navbar__utilizador">
+      <span class="gestao-navbar__utilizador">
+        {{ request.user.username }}
+        {% if request.user.is_superuser %}
+          <span class="badge badge--pago">super</span>
+        {% elif request.user.is_staff %}
+          <span class="badge badge--pendente">staff</span>
+        {% endif %}
+      </span>
+
+      <!-- Link para área principal se for staff/superuser -->
+      <a href="{% url 'matriculas_lista' %}" class="btn-ver">
+        Área principal
+      </a>
+
+      <!-- Logout do painel -->
+      <form method="POST" action="{% url 'gestao_logout' %}"
+            id="form-logout-gestao" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" class="btn-logout">Sair</button>
+      </form>
+    </div>
+  </nav>
+
+  <main class="conteudo">
+
+    <!-- Mensagens Django reutilizadas -->
+    {% if messages %}
+      <div class="mensagens">
+        {% for msg in messages %}
+          <div class="alerta alerta--{{ msg.tags }}" role="alert">
+            <span class="alerta__texto">{{ msg }}</span>
+            <button class="alerta__fechar" aria-label="Fechar">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <script src="{% static 'escola_musica/js/base.js' %}"></script>
+  {% block js_extra %}{% endblock %}
+</body>
+</html>
