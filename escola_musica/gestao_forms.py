@@ -197,7 +197,9 @@ class UtilizadorEditarForm(forms.ModelForm):
 
     class Meta:
         model  = User
-        fields = ['first_name', 'last_name', 'email', 'is_active']
+        # is_active removido — gerido pelo card de estado (acção toggle)
+        # is_superuser NUNCA aqui
+        fields = ['first_name', 'last_name', 'email']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'campo-input'}),
             'last_name':  forms.TextInput(attrs={'class': 'campo-input'}),
@@ -207,7 +209,6 @@ class UtilizadorEditarForm(forms.ModelForm):
             'first_name': 'Primeiro nome',
             'last_name':  'Apelido',
             'email':      'Email',
-            'is_active':  'Conta activa',
         }
         error_messages = {
             'email': {'required': 'O email é obrigatório.'},
@@ -239,8 +240,10 @@ class UtilizadorEditarForm(forms.ModelForm):
         user = super().save(commit=False)
         # Protecção: is_superuser NUNCA alterado por este form
         if self.instance.pk:
-            original = User.objects.get(pk=self.instance.pk)
+            original      = User.objects.get(pk=self.instance.pk)
             user.is_superuser = original.is_superuser
+            # is_active preservado — gerido exclusivamente pelo toggle
+            user.is_active = original.is_active
         # is_staff só para superutilizadores
         if 'is_staff' in self.cleaned_data and self.actor \
                 and self.actor.is_superuser:

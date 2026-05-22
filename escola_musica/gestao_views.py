@@ -231,83 +231,234 @@ def gestao_utilizador_criar(request):
 @pode_gerir_utilizador
 def gestao_utilizador_editar(request, pk, alvo=None):
     """
-    GET  → form de edição + botão "Mudar palavra-passe" (modal JS)
-    POST → valida dados + password (se preenchida) no backend
-           se erro → permanece no form com erros estilizados
-           se nenhuma alteração → mensagem elegante, sem session
-           se válido → guarda dados em session SEM password
-                    → redirect para confirmação com password em POST separado
+    GET  → form de edição + secções de grupos, activar/desactivar,
+           associar/remover perfil + botão "Mudar palavra-passe" (modal JS)
+    POST → distingue a acção pelo campo hidden 'acao_secundaria'
+           se 'dados'     → valida e processa edição principal
+           se 'grupos'    → actualiza grupos
+           se 'toggle'    → activa/desactiva conta
+           se 'remover'   → remove associação de perfil
     """
+
     form_dados    = UtilizadorEditarForm(
-        request.POST or None,
+        request.POST or None if request.POST.get('acao_secundaria') == 'dados'
+        else None,
         instance=alvo,
         actor=request.user
     )
     form_password = PasswordForm(
-        request.POST or None,
+        request.POST or None if request.POST.get('acao_secundaria') == 'dados'
+        else None,
         user=alvo
+    )
+    form_grupos = GruposForm(
+        request.POST or None if request.POST.get('acao_secundaria') == 'grupos'
+        else None,
+        initial={'grupos': alvo.groups.all()}
+    )
+    form_associar = AssociarPerfilForm(
+        request.POST or None if request.POST.get('acao_secundaria') == 'associar'
+        else None,
     )
 
     if request.method == 'POST':
-        dados_validos   = form_dados.is_valid()
-        password_valida = form_password.is_valid()
+        acao = request.POST.get('acao_secundaria', '')
 
-        if dados_validos and password_valida:
-            cd        = form_dados.cleaned_data
-            cd_pass   = form_password.cleaned_data
-            nova_pass = cd_pass.get('password_validada', '')
+        # ── Acção: guardar dados principais ──────────────────
+        if acao == 'dados':
+            dados_validos   = form_dados.is_valid()
+            password_valida = form_password.is_valid()
 
-            # Detecta alterações vs estado actual da BD
-            alteracoes = _detectar_alteracoes(
-                alvo, cd, nova_pass,
-                actor=request.user
-            )
+            if dados_validos and password_valida:
+                cd        = form_dados.cleaned_data
+                cd_pass   = form_password.cleaned_data
+                nova_pass = cd_pass.get('password_validada', '')
 
-            if not alteracoes:
-                messages.info(request, "Nenhuma alteração detectada.")
-                return redirect('gestao_utilizador_editar', pk=pk)
-
-            # Guarda em session APENAS dados — NUNCA a password
-            request.session[f'gestao_editar_{pk}'] = {
-                'pk':         pk,
-                'alteracoes': alteracoes,
-                'dados': {
-                    'first_name': cd.get('first_name', ''),
-                    'last_name':  cd.get('last_name', ''),
-                    'email':      cd.get('email', ''),
-                    'is_active':  cd.get('is_active', True),
-                    'is_staff':   cd.get('is_staff', alvo.is_staff)
-                                  if request.user.is_superuser
-                                  else alvo.is_staff,
-                },
-                # password_alterada é apenas um flag booleano
-                # a password real NUNCA fica em session
-                'password_alterada': bool(nova_pass),
-            }
-
-            # Se password foi preenchida, guarda em session de forma
-            # segura usando o hash temporário assinado pelo Django
-            # para revalidação na confirmação
-            # Usamos signing para não guardar plaintext
-            if nova_pass:
-                from django.core import signing
-                request.session[f'gestao_pass_{pk}'] = signing.dumps(
-                    nova_pass,
-                    salt='gestao_password_temporaria'
+                alteracoes = _detectar_alteracoes(
+                    alvo, cd, nova_pass, actor=request.user
                 )
 
-            return redirect('gestao_utilizador_confirmar', pk=pk)
+                if not alteracoes:
+                    messages.info(request, "Nenhuma alteração detectada.")
+                    return redirect('gestao_utilizador_editar', pk=pk)
 
-        else:
-            messages.warning(
-                request,
-                "Corrige os erros assinalados antes de continuar."
-            )
+                # Guarda dados em session — NUNCA a password em plaintext
+                request.session[f'gestao_editar_{pk}'] = {
+                    'pk':         pk,
+                    'alteracoes': alteracoes,
+                    'dados': {
+                        'first_name': cd.get('first_name', ''),
+                        'last_name':  cd.get('last_name', ''),
+                        'email':      cd.get('email', ''),
+                        'is_staff':   cd.get('is_staff', alvo.is_staff)
+                                      if request.user.is_superuser
+                                      else alvo.is_staff,
+                    },
+                    'password_alterada': bool(nova_pass),
+                }
+
+                if nova_pass:
+                    from django.core import signing
+                    request.session[f'gestao_pass_{pk}'] = signing.dumps(
+                        nova_pass,
+                        salt='gestao_password_temporaria'
+                    )
+
+                return redirect('gestao_utilizador_confirmar', pk=pk)
+
+            else:
+                messages.warning(
+                    request,
+                    "Corrige os erros assinalados antes de continuar."
+                )
+
+        # ── Acção: guardar grupos ─────────────────────────────
+        elif acao == 'grupos':
+            if form_grupos.is_valid():
+                try:
+                    with transaction.atomic():
+                        novos_grupos = form_grupos.cleaned_data['grupos']
+                        alvo.groups.set(novos_grupos)
+                        _audit(
+                            request.user.username, 'GERIR_GRUPOS',
+                            alvo=alvo.username, resultado='OK',
+                            detalhe=f"grupos={[g.name for g in novos_grupos]}"
+                        )
+                    messages.success(
+                        request,
+                        f"Grupos de '{alvo.username}' actualizados."
+                    )
+                    return redirect('gestao_utilizador_editar', pk=pk)
+                except Exception as e:
+                    logger.error(
+                        f"Erro ao gerir grupos pk={pk} | "
+                        f"actor={request.user.username} | erro={e}"
+                    )
+                    messages.error(request, "Não foi possível actualizar os grupos.")
+
+        # ── Acção: activar / desactivar ───────────────────────
+        elif acao == 'toggle':
+            try:
+                with transaction.atomic():
+                    alvo.is_active = not alvo.is_active
+                    alvo.save(update_fields=['is_active'])
+                    estado = "activada" if alvo.is_active else "desactivada"
+                    _audit(
+                        request.user.username, 'TOGGLE_CONTA',
+                        alvo=alvo.username, resultado='OK',
+                        detalhe=estado
+                    )
+                messages.success(
+                    request,
+                    f"Conta de '{alvo.username}' {estado}."
+                )
+                return redirect('gestao_utilizador_editar', pk=pk)
+            except Exception as e:
+                logger.error(
+                    f"Erro ao toggle pk={pk} | "
+                    f"actor={request.user.username} | erro={e}"
+                )
+                messages.error(request, "Não foi possível alterar o estado da conta.")
+
+        # ── Acção: remover associação de perfil ───────────────
+        elif acao == 'remover':
+            tipo = request.POST.get('tipo_perfil', '')
+            if tipo not in ['aluno', 'professor']:
+                messages.error(request, "Tipo de perfil inválido.")
+            else:
+                try:
+                    with transaction.atomic():
+                        if tipo == 'aluno':
+                            perfil = Aluno.objects.select_for_update().get(
+                                user_id=alvo.pk
+                            )
+                        else:
+                            perfil = Professor.objects.select_for_update().get(
+                                user_id=alvo.pk
+                            )
+                        nome_perfil = perfil.nome
+                        perfil.user = None
+                        perfil.save(update_fields=['user_id'])
+                        _audit(
+                            request.user.username, 'REMOVER_ASSOCIACAO',
+                            alvo=alvo.username, resultado='OK',
+                            detalhe=f"tipo={tipo} perfil={nome_perfil}"
+                        )
+                    messages.success(
+                        request,
+                        f"Associação com {tipo} '{nome_perfil}' removida."
+                    )
+                    return redirect('gestao_utilizador_editar', pk=pk)
+                except (Aluno.DoesNotExist, Professor.DoesNotExist):
+                    messages.error(request, "Perfil não encontrado.")
+                except Exception as e:
+                    logger.error(
+                        f"Erro ao remover associação pk={pk} | "
+                        f"actor={request.user.username} | erro={e}"
+                    )
+                    messages.error(request, "Não foi possível remover a associação.")
+
+        # ── Acção: associar perfil ────────────────────────────
+        elif acao == 'associar':
+            if form_associar.is_valid():
+                tipo      = form_associar.cleaned_data['tipo']
+                perfil_id = form_associar.cleaned_data['perfil_id']
+                try:
+                    with transaction.atomic():
+                        if tipo == 'aluno':
+                            perfil = Aluno.objects.select_for_update().get(
+                                pk=perfil_id
+                            )
+                        else:
+                            perfil = Professor.objects.select_for_update().get(
+                                pk=perfil_id
+                            )
+                        if perfil.user_id:
+                            messages.error(
+                                request,
+                                f"Este {tipo} já tem utilizador associado."
+                            )
+                        else:
+                            perfil.user = alvo
+                            perfil.save(update_fields=['user_id'])
+                            _audit(
+                                request.user.username, 'ASSOCIAR_PERFIL',
+                                alvo=alvo.username, resultado='OK',
+                                detalhe=f"tipo={tipo} perfil={perfil.nome}"
+                            )
+                            messages.success(
+                                request,
+                                f"Utilizador associado a {tipo} '{perfil.nome}'."
+                            )
+                            return redirect('gestao_utilizador_editar', pk=pk)
+                except (Aluno.DoesNotExist, Professor.DoesNotExist):
+                    messages.error(request, "Perfil não encontrado.")
+                except Exception as e:
+                    logger.error(
+                        f"Erro ao associar pk={pk} | "
+                        f"actor={request.user.username} | erro={e}"
+                    )
+                    messages.error(request, "Não foi possível fazer a associação.")
+
+    # Determina perfil actual do alvo
+    try:
+        perfil_aluno     = alvo.aluno
+    except Exception:
+        perfil_aluno     = None
+    try:
+        perfil_professor = alvo.professor
+    except Exception:
+        perfil_professor = None
 
     return render(request, 'gestao/utilizador_editar.html', {
-        'form_dados':    form_dados,
-        'form_password': form_password,
-        'utilizador':    alvo,
+        'form_dados':       form_dados,
+        'form_password':    form_password,
+        'form_grupos':      form_grupos,
+        'form_associar':    form_associar,
+        'utilizador':       alvo,
+        'perfil_aluno':     perfil_aluno,
+        'perfil_professor': perfil_professor,
+        'grupos_actuais':   alvo.groups.all(),
     })
 
 def _detectar_alteracoes(alvo, cd, nova_pass, actor):
@@ -322,7 +473,6 @@ def _detectar_alteracoes(alvo, cd, nova_pass, actor):
         'first_name': ('Primeiro nome', alvo.first_name),
         'last_name':  ('Apelido',       alvo.last_name),
         'email':      ('Email',         alvo.email),
-        'is_active':  ('Conta activa',  alvo.is_active),
     }
 
     for campo, (label, valor_actual) in mapeamento.items():
@@ -448,7 +598,7 @@ def gestao_utilizador_confirmar(request, pk, alvo=None):
                     alvo.first_name = dados['first_name']
                     alvo.last_name  = dados['last_name']
                     alvo.email      = dados['email']
-                    alvo.is_active  = dados['is_active']
+                
 
                     # is_staff só para superutilizadores
                     if request.user.is_superuser:

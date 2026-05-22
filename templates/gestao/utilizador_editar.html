@@ -5,109 +5,302 @@
 
 {% block css_extra %}
   <link rel="stylesheet" href="{% static 'escola_musica/css/modal.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/gestao.css' %}">
 {% endblock %}
 
 {% block conteudo %}
 
-<div class="pagina-cabecalho">
-  <div>
-    <h1 class="pagina-titulo">Editar — {{ utilizador.username }}</h1>
-    <p class="pagina-subtitulo">
-      Campos com <span class="obrigatorio">*</span> são obrigatórios.
-    </p>
+<!-- ══ CABEÇALHO ══ -->
+<div class="utilizador-cabecalho">
+  <div class="utilizador-cabecalho__info">
+    <span class="utilizador-cabecalho__titulo">Editar utilizador</span>
+    <span class="utilizador-cabecalho__username">{{ utilizador.username }}</span>
+    <span class="utilizador-cabecalho__sub">Gestão de dados, permissões e perfil</span>
   </div>
-  <a href="{% url 'gestao_lista' %}" class="btn-secundario">← Cancelar</a>
+  <div class="utilizador-cabecalho__acoes">
+    {% if utilizador.is_active %}
+      <span class="badge badge--pago">Ativo</span>
+    {% else %}
+      <span class="badge badge--cancelado">Inativo</span>
+    {% endif %}
+    <a href="{% url 'gestao_lista' %}" class="btn-secundario">← Voltar à lista</a>
+  </div>
 </div>
 
-<form method="POST"
-      action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
-      novalidate
-      id="form-editar-utilizador">
-  {% csrf_token %}
 
-  <!-- Hidden fields de password — injectados pela modal JS -->
-  <!-- Nunca guardados em session — revalidados no backend -->
-  <input type="hidden" name="nova_password"      id="hidden-nova-password"      value="">
-  <input type="hidden" name="confirmar_password" id="hidden-confirmar-password" value="">
+<!-- ══ LAYOUT GRID ══ -->
+<div class="utilizador-layout">
 
-  <div class="form-grid" style="grid-template-columns:1fr;">
-    <div class="form-secao" style="max-width:560px;">
+  <!-- ════ COLUNA PRINCIPAL ════ -->
+  <div class="utilizador-main">
 
-      <h2 class="form-secao__titulo">👤 Dados do utilizador</h2>
+    <!-- CARD 1: Dados do utilizador -->
+    <form method="POST"
+          action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+          novalidate
+          id="form-editar-utilizador">
+      {% csrf_token %}
+      <input type="hidden" name="acao_secundaria"    value="dados">
+      <input type="hidden" name="nova_password"      id="hidden-nova-password"      value="">
+      <input type="hidden" name="confirmar_password" id="hidden-confirmar-password" value="">
 
-      <!-- Campos de dados -->
-      {% for field in form_dados %}
-        <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
-          <label for="{{ field.id_for_label }}">
-            {{ field.label }}
-            {% if field.field.required %}
-              <span class="obrigatorio">*</span>
-            {% endif %}
-          </label>
-          {{ field }}
-          {% for erro in field.errors %}
-            <span class="form-erro" role="alert">
-              <span class="form-erro__icone">!</span>{{ erro }}
-            </span>
-          {% endfor %}
-        </div>
-      {% endfor %}
+      <div class="painel-card card-neutral">
+        <p class="painel-card__titulo">👤 Dados do utilizador</p>
 
-      {% if form_dados.non_field_errors %}
-        <div class="alerta alerta--error">
-          {% for erro in form_dados.non_field_errors %}
-            <p>{{ erro }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
+        {% for field in form_dados %}
+          <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}
+                <span class="obrigatorio">*</span>
+              {% endif %}
+            </label>
+            {{ field }}
+            {% for erro in field.errors %}
+              <span class="form-erro" role="alert">
+                <span class="form-erro__icone">!</span>{{ erro }}
+              </span>
+            {% endfor %}
+          </div>
+        {% endfor %}
 
-      <!-- Erros de password vindos do backend -->
-      {% if form_password.non_field_errors %}
-        <div class="alerta alerta--error">
-          {% for erro in form_password.non_field_errors %}
-            <span class="form-erro" role="alert">
-              <span class="form-erro__icone">!</span>{{ erro }}
-            </span>
-          {% endfor %}
-        </div>
-      {% endif %}
+        {% if form_dados.non_field_errors %}
+          <div class="alerta alerta--error">
+            {% for erro in form_dados.non_field_errors %}
+              <p>{{ erro }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
 
-      <!-- Indicador: password foi preenchida na modal -->
-      <div id="indicador-password" style="display:none;margin-bottom:1rem;">
-        <div class="alerta alerta--info" style="align-items:center;">
-          <span class="alerta__texto">
-            🔒 Nova palavra-passe definida — será validada e alterada ao confirmar.
-          </span>
+        <!-- Subsecção de segurança -->
+        <div class="seguranca-secao">
+          <p class="seguranca-secao__titulo">🔒 Segurança</p>
+          <p class="seguranca-secao__desc">
+            A nova palavra-passe será aplicada após confirmação final.
+          </p>
+
+          {% if form_password.non_field_errors %}
+            <div class="alerta alerta--error" style="margin-bottom:0.75rem;">
+              {% for erro in form_password.non_field_errors %}
+                <span class="form-erro" role="alert">
+                  <span class="form-erro__icone">!</span>{{ erro }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- Indicador password preenchida -->
+          <div id="indicador-password" style="display:none;margin-bottom:0.75rem;">
+            <div class="alerta alerta--info" style="align-items:center;">
+              <span class="alerta__texto">
+                🔒 Nova palavra-passe definida — será alterada ao confirmar.
+              </span>
+              <button type="button"
+                      class="alerta__fechar"
+                      id="btn-limpar-password"
+                      title="Remover">×</button>
+            </div>
+          </div>
+
           <button type="button"
-                  class="alerta__fechar"
-                  id="btn-limpar-password"
-                  title="Remover password">×</button>
+                  class="btn-secundario"
+                  id="btn-abrir-modal-password">
+            🔒 Mudar palavra-passe
+          </button>
         </div>
       </div>
 
-      <!-- Botão para abrir modal de password -->
-      <div style="margin-bottom:1.75rem;">
-        <button type="button"
-                class="btn-secundario"
-                id="btn-abrir-modal-password">
-          🔒 Mudar palavra-passe
+      <!-- CARD 2: Botão guardar -->
+      <div class="painel-card" style="padding:1.25rem;">
+        <button type="submit"
+                class="btn-guardar-principal"
+                id="btn-guardar">
+          Guardar alterações
         </button>
       </div>
 
-      <div class="form-acoes">
-        <button type="submit" class="btn-primario btn-grande" id="btn-guardar">
-          Seguinte — Verificar alterações →
+    </form>
+
+  </div><!-- /utilizador-main -->
+
+
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="utilizador-sidebar">
+
+    <!-- CARD: Estado da conta -->
+    <form method="POST"
+          action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+          class="form-confirmacao"
+          data-mensagem="{% if utilizador.is_active %}Desactivar{% else %}Activar{% endif %} a conta de '{{ utilizador.username }}'?">
+      {% csrf_token %}
+      <input type="hidden" name="acao_secundaria" value="toggle">
+
+      <div class="painel-card {% if utilizador.is_active %}card-warning{% else %}card-success{% endif %}">
+        <p class="painel-card__titulo">🔘 Estado da conta</p>
+
+        <div class="estado-conta">
+          <span class="estado-conta__label">Estado atual:</span>
+          {% if utilizador.is_active %}
+            <span class="badge badge--pago">Ativo</span>
+          {% else %}
+            <span class="badge badge--cancelado">Inativo</span>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+                class="btn-acao {% if utilizador.is_active %}btn-acao--desactivar{% else %}btn-acao--activar{% endif %}"
+                style="width:100%;justify-content:center;padding:0.55rem;">
+          {% if utilizador.is_active %}Desativar conta{% else %}Ativar conta{% endif %}
         </button>
       </div>
+    </form>
 
+    <!-- CARD: Perfil associado -->
+    <div class="painel-card {% if perfil_aluno or perfil_professor %}card-neutral{% else %}card-neutral{% endif %}">
+      <p class="painel-card__titulo">🔗 Perfil associado</p>
+
+      {% if perfil_aluno %}
+        <div class="perfil-info">
+          <span>🎓</span>
+          <div>
+            <div class="perfil-info__tipo">Aluno</div>
+            <div>{{ perfil_aluno.nome }}</div>
+          </div>
+        </div>
+        <form method="POST"
+              action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+              class="form-confirmacao"
+              data-mensagem="Remover associação com o aluno '{{ perfil_aluno.nome }}'?">
+          {% csrf_token %}
+          <input type="hidden" name="acao_secundaria" value="remover">
+          <input type="hidden" name="tipo_perfil"     value="aluno">
+          <button type="submit"
+                  class="btn-acao btn-acao--desactivar"
+                  style="width:100%;justify-content:center;padding:0.5rem;">
+            Remover associação
+          </button>
+        </form>
+
+      {% elif perfil_professor %}
+        <div class="perfil-info">
+          <span>🎻</span>
+          <div>
+            <div class="perfil-info__tipo">Professor</div>
+            <div>{{ perfil_professor.nome }}</div>
+          </div>
+        </div>
+        <form method="POST"
+              action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+              class="form-confirmacao"
+              data-mensagem="Remover associação com o professor '{{ perfil_professor.nome }}'?">
+          {% csrf_token %}
+          <input type="hidden" name="acao_secundaria" value="remover">
+          <input type="hidden" name="tipo_perfil"     value="professor">
+          <button type="submit"
+                  class="btn-acao btn-acao--desactivar"
+                  style="width:100%;justify-content:center;padding:0.5rem;">
+            Remover associação
+          </button>
+        </form>
+
+      {% elif not utilizador.is_staff and not utilizador.is_superuser %}
+        <div class="sem-perfil">
+          <span class="sem-perfil__icone">🔗</span>
+          <p class="sem-perfil__texto">
+            Este utilizador ainda não possui perfil associado.
+          </p>
+        </div>
+
+        <form method="POST"
+              action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+              novalidate
+              id="form-associar">
+          {% csrf_token %}
+          <input type="hidden" name="acao_secundaria" value="associar">
+
+          <div class="form-grupo {% if form_associar.tipo.errors %}form-grupo--erro{% endif %}">
+            <label for="{{ form_associar.tipo.id_for_label }}">Tipo de perfil</label>
+            {{ form_associar.tipo }}
+            {% for erro in form_associar.tipo.errors %}
+              <span class="form-erro" role="alert">
+                <span class="form-erro__icone">!</span>{{ erro }}
+              </span>
+            {% endfor %}
+          </div>
+
+          <div class="form-grupo" id="div-aluno">
+            <label for="{{ form_associar.aluno_id.id_for_label }}">Aluno</label>
+            {{ form_associar.aluno_id }}
+          </div>
+
+          <div class="form-grupo" id="div-professor" style="display:none;">
+            <label for="{{ form_associar.professor_id.id_for_label }}">Professor</label>
+            {{ form_associar.professor_id }}
+          </div>
+
+          {% if form_associar.non_field_errors %}
+            <div class="alerta alerta--error">
+              {% for erro in form_associar.non_field_errors %}
+                <p>{{ erro }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <button type="submit"
+                  class="btn-acao btn-acao--desactivar"
+                  style="width:100%;justify-content:center;padding:0.5rem;">
+            Associar perfil
+          </button>
+        </form>
+
+      {% else %}
+        <p class="texto-suave" style="font-size:0.83rem;">
+          Utilizadores administrativos não têm perfil de aluno ou professor.
+        </p>
+      {% endif %}
     </div>
-  </div>
-</form>
+
+    <!-- CARD: Grupos -->
+    <form method="POST"
+          action="{% url 'gestao_utilizador_editar' utilizador.pk %}"
+          novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="acao_secundaria" value="grupos">
+
+      <div class="painel-card card-neutral">
+        <p class="painel-card__titulo">🏷️ Grupos</p>
+
+        {% if form_grupos.grupos.field.queryset.count > 0 %}
+          <div class="grupos-lista">
+            {% for checkbox in form_grupos.grupos %}
+              <div class="checkbox-grupo">
+                {{ checkbox.tag }}
+                <label for="{{ checkbox.id_for_label }}">
+                  {{ checkbox.choice_label }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="texto-suave" style="font-size:0.83rem;margin-bottom:1rem;">
+            Não existem grupos configurados.
+          </p>
+        {% endif %}
+
+        <button type="submit"
+                class="btn-acao btn-acao--desactivar"
+                style="width:100%;justify-content:center;padding:0.5rem;">
+          Guardar grupos
+        </button>
+      </div>
+    </form>
+
+  </aside><!-- /utilizador-sidebar -->
+
+</div><!-- /utilizador-layout -->
 
 
-<!-- ══ MODAL DE PASSWORD — client-side ══ -->
-<!-- Apenas recolhe e injeta nos hidden fields -->
-<!-- Não persiste nada — validação real ocorre no backend -->
+<!-- ══ MODAL DE PASSWORD ══ -->
 <div class="modal-overlay"
      id="modal-password"
      role="dialog"
@@ -115,31 +308,23 @@
      aria-labelledby="modal-password-titulo"
      style="display:none; pointer-events:none;">
   <div class="modal">
-
     <div class="modal__cabecalho">
       <div class="modal__icone-alerta">🔒</div>
-      <h2 class="modal__titulo" id="modal-password-titulo">
-        Mudar palavra-passe
-      </h2>
+      <h2 class="modal__titulo" id="modal-password-titulo">Mudar palavra-passe</h2>
       <p class="modal__subtitulo">
         A password só será alterada após confirmação final.
-        Nada é guardado ao clicar Aplicar.
       </p>
     </div>
-
     <div class="modal__corpo">
-
       <div id="modal-password-erro"
            class="alerta alerta--error"
            style="display:none;margin-bottom:1rem;"
            role="alert">
         <span id="modal-password-erro-texto"></span>
       </div>
-
-      <div class="form-grupo" id="modal-grupo-p1">
+      <div class="form-grupo">
         <label for="modal-nova-password">
-          Nova palavra-passe
-          <span class="obrigatorio">*</span>
+          Nova palavra-passe <span class="obrigatorio">*</span>
         </label>
         <input type="password"
                id="modal-nova-password"
@@ -147,11 +332,9 @@
                placeholder="••••••••"
                autocomplete="new-password">
       </div>
-
-      <div class="form-grupo" id="modal-grupo-p2">
+      <div class="form-grupo">
         <label for="modal-confirmar-password">
-          Confirmar nova palavra-passe
-          <span class="obrigatorio">*</span>
+          Confirmar nova palavra-passe <span class="obrigatorio">*</span>
         </label>
         <input type="password"
                id="modal-confirmar-password"
@@ -159,18 +342,11 @@
                placeholder="••••••••"
                autocomplete="new-password">
       </div>
-
     </div>
-
     <div class="modal__rodape">
-      <button type="button" class="btn-secundario" id="btn-cancelar-modal">
-        Cancelar
-      </button>
-      <button type="button" class="btn-primario" id="btn-aplicar-password">
-        Aplicar
-      </button>
+      <button type="button" class="btn-secundario" id="btn-cancelar-modal">Cancelar</button>
+      <button type="button" class="btn-primario"   id="btn-aplicar-password">Aplicar</button>
     </div>
-
   </div>
 </div>
 
@@ -178,135 +354,99 @@
 
 {% block js_extra %}
 <script>
-/* ══════════════════════════════════════════════════
-   MODAL DE PASSWORD — client-side
-   Responsabilidade: recolher e injectar nos hidden fields.
-   Validação real: backend (PasswordForm + validate_password).
-   Nada é persistido ao clicar Aplicar.
-══════════════════════════════════════════════════ */
 (function () {
-  var modal        = document.getElementById('modal-password');
-  var btnAbrir     = document.getElementById('btn-abrir-modal-password');
-  var btnCancelar  = document.getElementById('btn-cancelar-modal');
-  var btnAplicar   = document.getElementById('btn-aplicar-password');
-  var btnLimpar    = document.getElementById('btn-limpar-password');
-  var btnGuardar   = document.getElementById('btn-guardar');
-  var inputP1      = document.getElementById('modal-nova-password');
-  var inputP2      = document.getElementById('modal-confirmar-password');
-  var hiddenP1     = document.getElementById('hidden-nova-password');
-  var hiddenP2     = document.getElementById('hidden-confirmar-password');
-  var indicador    = document.getElementById('indicador-password');
-  var erroDiv      = document.getElementById('modal-password-erro');
-  var erroTexto    = document.getElementById('modal-password-erro-texto');
+  /* ── Modal de password — lógica inalterada ── */
+  const modal       = document.getElementById('modal-password');
+  const btnAbrir    = document.getElementById('btn-abrir-modal-password');
+  const btnCancelar = document.getElementById('btn-cancelar-modal');
+  const btnAplicar  = document.getElementById('btn-aplicar-password');
+  const btnLimpar   = document.getElementById('btn-limpar-password');
+  const inputP1     = document.getElementById('modal-nova-password');
+  const inputP2     = document.getElementById('modal-confirmar-password');
+  const hiddenP1    = document.getElementById('hidden-nova-password');
+  const hiddenP2    = document.getElementById('hidden-confirmar-password');
+  const indicador   = document.getElementById('indicador-password');
+  const erroDiv     = document.getElementById('modal-password-erro');
+  const erroTexto   = document.getElementById('modal-password-erro-texto');
+  const btnGuardar  = document.getElementById('btn-guardar');
 
-  /* ── Helpers ── */
-  function mostrarErro(msg) {
-    erroTexto.textContent = msg;
-    erroDiv.style.display = '';
-  }
-
-  function limparErro() {
-    erroDiv.style.display = 'none';
-    erroTexto.textContent = '';
-  }
+  function mostrarErro(msg) { erroTexto.textContent = msg; erroDiv.style.display = ''; }
+  function limparErro()     { erroDiv.style.display = 'none'; erroTexto.textContent = ''; }
 
   function abrirModal() {
-    inputP1.value = '';
-    inputP2.value = '';
-    limparErro();
-    modal.style.display       = 'flex';
-    modal.style.opacity       = '1';
+    inputP1.value = ''; inputP2.value = ''; limparErro();
+    modal.style.display = 'flex'; modal.style.opacity = '1';
     modal.style.pointerEvents = 'all';
     modal.classList.add('modal-overlay--visivel');
     setTimeout(function () { inputP1.focus(); }, 50);
   }
 
   function fecharModal() {
-    modal.style.opacity       = '0';
-    modal.style.pointerEvents = 'none';
+    modal.style.opacity = '0'; modal.style.pointerEvents = 'none';
     modal.classList.remove('modal-overlay--visivel');
     setTimeout(function () { modal.style.display = 'none'; }, 300);
   }
 
-  function limparPasswordHidden() {
-    hiddenP1.value          = '';
-    hiddenP2.value          = '';
+  if (btnAbrir)    btnAbrir.addEventListener('click', abrirModal);
+  if (btnCancelar) btnCancelar.addEventListener('click', function () {
+    inputP1.value = ''; inputP2.value = ''; fecharModal();
+  });
+  if (btnLimpar) btnLimpar.addEventListener('click', function () {
+    hiddenP1.value = ''; hiddenP2.value = '';
     indicador.style.display = 'none';
-  }
-
-  /* ── Eventos ── */
-  btnAbrir.addEventListener('click', abrirModal);
-
-  btnCancelar.addEventListener('click', function () {
-    /* Fecha sem aplicar — hidden fields não são alterados */
-    inputP1.value = '';
-    inputP2.value = '';
-    fecharModal();
   });
-
-  btnLimpar.addEventListener('click', limparPasswordHidden);
-
-  /* Fechar ao clicar no overlay */
-  modal.addEventListener('click', function (e) {
-    if (e.target === modal) {
-      inputP1.value = '';
-      inputP2.value = '';
-      fecharModal();
-    }
+  if (modal) modal.addEventListener('click', function (e) {
+    if (e.target === modal) { inputP1.value = ''; inputP2.value = ''; fecharModal(); }
   });
-
-  /* Fechar com Escape */
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && modal.style.display === 'flex') {
-      inputP1.value = '';
-      inputP2.value = '';
-      fecharModal();
+    if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+      inputP1.value = ''; inputP2.value = ''; fecharModal();
     }
   });
-
-  /* Aplicar — validação mínima client-side antes de injectar */
-  btnAplicar.addEventListener('click', function () {
+  if (btnAplicar) btnAplicar.addEventListener('click', function () {
     limparErro();
-    var p1 = inputP1.value;
-    var p2 = inputP2.value;
-
-    if (!p1 || !p2) {
-      mostrarErro('Preenche os dois campos.');
-      return;
-    }
-    if (p1 !== p2) {
-      mostrarErro('As palavras-passe não coincidem.');
-      return;
-    }
-    if (p1.length < 8) {
-      mostrarErro('Mínimo de 8 caracteres.');
-      return;
-    }
-
-    /* Injeta nos hidden fields — validação completa no backend */
-    hiddenP1.value = p1;
-    hiddenP2.value = p2;
-
-    /* Mostra indicador */
+    const p1 = inputP1.value, p2 = inputP2.value;
+    if (!p1 || !p2)    { mostrarErro('Preenche os dois campos.'); return; }
+    if (p1 !== p2)     { mostrarErro('As palavras-passe não coincidem.'); return; }
+    if (p1.length < 8) { mostrarErro('Mínimo de 8 caracteres.'); return; }
+    hiddenP1.value = p1; hiddenP2.value = p2;
     indicador.style.display = '';
-
-    /* Limpa campos da modal — não ficam em memória */
-    inputP1.value = '';
-    inputP2.value = '';
-
+    inputP1.value = ''; inputP2.value = '';
     fecharModal();
   });
 
-  /* Feedback visual ao submeter o form */
-  var formEditar = document.getElementById('form-editar-utilizador');
-  if (formEditar) {
+  const formEditar = document.getElementById('form-editar-utilizador');
+  if (formEditar && btnGuardar) {
     formEditar.addEventListener('submit', function () {
-      if (btnGuardar) {
-        btnGuardar.textContent = 'A validar...';
-        btnGuardar.disabled    = true;
-      }
+      btnGuardar.textContent = 'A validar...';
+      btnGuardar.disabled    = true;
     });
   }
+
+  /* ── Filtro aluno/professor no form de associar — inalterado ── */
+  const selectTipo   = document.getElementById('id_tipo');
+  const divAluno     = document.getElementById('div-aluno');
+  const divProfessor = document.getElementById('div-professor');
+
+  if (selectTipo) {
+    function actualizarSelects() {
+      if (selectTipo.value === 'aluno') {
+        divAluno.style.display = ''; divProfessor.style.display = 'none';
+      } else {
+        divAluno.style.display = 'none'; divProfessor.style.display = '';
+      }
+    }
+    selectTipo.addEventListener('change', actualizarSelects);
+    actualizarSelects();
+  }
+
+  /* ── Confirmação acções destrutivas — inalterado ── */
+  document.querySelectorAll('.form-confirmacao').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      const msg = form.dataset.mensagem || 'Tens a certeza?';
+      if (!confirm(msg)) e.preventDefault();
+    });
+  });
 
 })();
 </script>

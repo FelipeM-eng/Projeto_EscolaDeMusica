@@ -225,3 +225,311 @@
 .gestao-resumo strong {
   color: var(--cor-texto);
 }
+
+/* ── Grelha de acções 2×2 na tabela de utilizadores ── */
+.acoes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  min-width: 180px;
+}
+
+.acoes-grid .btn-acao,
+.acoes-grid form {
+  width: 100%;
+  margin: 0;
+}
+
+.acoes-grid form .btn-acao {
+  width: 100%;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.acoes-grid .btn-acao {
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════
+   PÁGINA DE EDIÇÃO DE UTILIZADOR — layout em grid
+═══════════════════════════════════════════════ */
+
+/* ── Layout principal 2 colunas ── */
+.utilizador-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 360px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .utilizador-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Cards reutilizáveis ── */
+.painel-card {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  margin-bottom: 1.25rem;
+}
+
+.painel-card:last-child {
+  margin-bottom: 0;
+}
+
+.painel-card__titulo {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cor-texto-suave);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Sidebar — garante separação entre cards ── */
+.utilizador-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Remove margin-bottom dos cards dentro da sidebar
+   pois o gap do flex já gere o espaçamento */
+.utilizador-sidebar .painel-card {
+  margin-bottom: 0;
+}
+
+/* ── Variantes de card ── */
+.card-danger {
+  border-left: 4px solid #dc2626;
+}
+
+.card-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-success {
+  border-left: 4px solid #16a34a;
+}
+
+.card-neutral {
+  border-left: 4px solid rgba(201, 168, 76, 0.3);
+}
+
+/* ── Cabeçalho da página de edição ── */
+.utilizador-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.utilizador-cabecalho__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.utilizador-cabecalho__titulo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--cor-texto);
+  line-height: 1.2;
+}
+
+.utilizador-cabecalho__username {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+  letter-spacing: 0.02em;
+}
+
+.utilizador-cabecalho__sub {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+}
+
+.utilizador-cabecalho__acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Subsecção de segurança dentro do card dados ── */
+.seguranca-secao {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.seguranca-secao__titulo {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.5rem;
+}
+
+.seguranca-secao__desc {
+  font-size: 0.83rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.9rem;
+}
+
+/* ── Botão guardar forte ── */
+.btn-guardar-principal {
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--raio);
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.18),
+    rgba(123, 79, 166, 0.12)
+  );
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  color: var(--cor-primaria);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.03em;
+  font-family: var(--fonte-corpo);
+}
+
+.btn-guardar-principal:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(201, 168, 76, 0.28),
+    rgba(123, 79, 166, 0.2)
+  );
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 18px rgba(201, 168, 76, 0.18);
+}
+
+.btn-guardar-principal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Estado da conta ── */
+.estado-conta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  margin-bottom: 1rem;
+}
+
+.estado-conta__label {
+  font-size: 0.83rem;
+  color: var(--cor-texto-suave);
+}
+
+/* ── Perfil associado ── */
+.perfil-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--raio);
+  border: 1px solid var(--cor-borda);
+  margin-bottom: 1rem;
+}
+
+.perfil-info__tipo {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.1rem;
+}
+
+.perfil-info__nome {
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+  font-weight: 600;
+}
+
+/* ── Grupos com scroll ── */
+.grupos-lista {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding-right: 0.25rem;
+}
+
+.grupos-lista::-webkit-scrollbar       { width: 4px; }
+.grupos-lista::-webkit-scrollbar-track { background: transparent; }
+.grupos-lista::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.3);
+  border-radius: 4px;
+}
+
+/* ── Sem perfil ── */
+.sem-perfil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 0;
+  text-align: center;
+}
+
+.sem-perfil__icone {
+  font-size: 2rem;
+  opacity: 0.3;
+}
+
+.sem-perfil__texto {
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  line-height: 1.4;
+}
+
+/* ── BOTÃO BASE GLOBAL (IMPORTANTE) ── */
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--raio);
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  border: 1px solid var(--cor-borda);
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.18), rgba(123, 79, 166, 0.12));
+  color: var(--cor-texto);
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-acao:hover {
+  transform: translateY(-1px);
+  border-color: var(--cor-primaria);
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.18), rgba(123, 79, 166, 0.12));
+}

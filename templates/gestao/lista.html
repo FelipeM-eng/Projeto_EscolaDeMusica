@@ -37,8 +37,8 @@
       <label class="gestao-filtros__label">Estado</label>
       <select name="estado" class="gestao-filtros__select">
         <option value="">Todos</option>
-        <option value="activo"   {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
-        <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+        <option value="activo"   {% if filtro_estado == 'activo' %}selected{% endif %}>Ativo</option>
+        <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inativo</option>
       </select>
     </div>
 
@@ -136,75 +136,17 @@
 
           <td>
             {% if u.is_active %}
-              <span class="badge badge--pago">Activo</span>
+              <span class="badge badge--pago">Ativo</span>
             {% else %}
-              <span class="badge badge--cancelado">Inactivo</span>
+              <span class="badge badge--cancelado">Inativo</span>
             {% endif %}
           </td>
 
           <td class="acoes-celula">
-            <!-- Editar -->
             <a href="{% url 'gestao_utilizador_editar' u.pk %}"
-               class="btn-acao btn-acao--editar">
+              class="btn-acao btn-acao--editar">
               Editar
             </a>
-
-            <!-- Grupos -->
-            <a href="{% url 'gestao_utilizador_grupos' u.pk %}"
-               class="btn-acao btn-acao--grupos">
-              Grupos
-            </a>
-
-            <!-- Activar / Desactivar -->
-            <form method="POST"
-                  action="{% url 'gestao_utilizador_toggle' u.pk %}"
-                  style="display:inline"
-                  class="form-confirmacao"
-                  data-mensagem="{% if u.is_active %}Desactivar{% else %}Activar{% endif %} a conta de '{{ u.username }}'?">
-              {% csrf_token %}
-              <button type="submit"
-                      class="btn-acao {% if u.is_active %}btn-acao--desactivar{% else %}btn-acao--activar{% endif %}">
-                {% if u.is_active %}Desactivar{% else %}Activar{% endif %}
-              </button>
-            </form>
-
-            <!-- Associar perfil (se sem perfil) -->
-            {% if not u.aluno and not u.professor and not u.is_staff and not u.is_superuser %}
-              <a href="{% url 'gestao_utilizador_associar' u.pk %}"
-                 class="btn-acao btn-acao--associar">
-                Associar
-              </a>
-            {% endif %}
-
-            <!-- Remover associação aluno -->
-            {% if u.aluno %}
-              <form method="POST"
-                    action="{% url 'gestao_utilizador_remover' u.aluno.id_aluno %}"
-                    style="display:inline"
-                    class="form-confirmacao"
-                    data-mensagem="Remover associação do utilizador '{{ u.username }}' com o aluno '{{ u.aluno.nome }}'?">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="aluno">
-                <button type="submit" class="btn-acao btn-acao--desactivar">
-                  Remover perfil
-                </button>
-              </form>
-            {% endif %}
-
-            <!-- Remover associação professor -->
-            {% if u.professor %}
-              <form method="POST"
-                    action="{% url 'gestao_utilizador_remover' u.professor.id_professor %}"
-                    style="display:inline"
-                    class="form-confirmacao"
-                    data-mensagem="Remover associação do utilizador '{{ u.username }}' com o professor '{{ u.professor.nome }}'?">
-                {% csrf_token %}
-                <input type="hidden" name="tipo" value="professor">
-                <button type="submit" class="btn-acao btn-acao--desactivar">
-                  Remover perfil
-                </button>
-              </form>
-            {% endif %}
           </td>
 
         </tr>
