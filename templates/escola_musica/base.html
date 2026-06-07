@@ -16,8 +16,14 @@
 
   <nav class="navbar">
     <a href="{% url 'matriculas_lista' %}" class="navbar__logo">
-      🎵 Escola de Música
+      <span class="navbar__logo-texto">🎵 Escola de Música</span>
+      <img
+        src="{% static 'escola_musica/images/project.webp' %}"
+        alt="LF"
+        class="navbar__logo-img"
+      >
     </a>
+
     <div class="navbar__utilizador">
       <span>{{ request.user.username }}</span>
       <form id="form-logout" method="POST" action="{% url 'logout' %}">

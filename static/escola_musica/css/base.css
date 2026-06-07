@@ -265,3 +265,22 @@ body {
 }
 
 .alerta__fechar:hover { opacity: 1; }
+
+.navbar__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-decoration: none;
+}
+
+.navbar__logo-texto {
+  display: inline-flex;
+  align-items: center;
+}
+
+.navbar__logo-img {
+  height: 32px;
+  width: auto;
+  display: inline-block;
+  object-fit: contain;
+}

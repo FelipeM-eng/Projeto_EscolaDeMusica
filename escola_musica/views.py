@@ -8,7 +8,12 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db import IntegrityError, DatabaseError
 
-from .models import Matricula, Pagamento, Aluno, Curso, Turma
+from django.utils import timezone
+
+from .models import (
+    Aluno, Professor, Matricula, Pagamento,
+    Curso, Turma, Aula, AulaDoAluno,
+)
 from .forms import (
     MatriculaForm, MatriculaEdicaoForm,
     PagamentoForm, PagamentoEdicaoForm,
@@ -34,6 +39,19 @@ from .utils import (
 
 def mainpage(request):
     return render(request, 'escola_musica/mainpage.html')
+
+def curso_canto(request):
+    return render(request, 'escola_musica/cursos/canto.html')
+
+def curso_bateria(request):
+    return render(request, 'escola_musica/cursos/bateria.html')
+
+def curso_piano(request):
+    return render(request, 'escola_musica/cursos/piano.html')
+
+def curso_violao(request):
+    return render(request, 'escola_musica/cursos/violao.html')
+
 
 
 def login_view(request):
@@ -157,15 +175,103 @@ def login_professor(request):
 
 @login_required
 def aluno_dashboard(request):
-    """Dashboard placeholder para alunos."""
-    # Verifica que é realmente um aluno
+    """
+    Dashboard do aluno.
+    Segurança: todos os dados filtrados por request.user.aluno
+    Nunca acessa dados de outro aluno.
+    """
+
+    # Protecção — verifica que é realmente um aluno
     if not hasattr(request.user, 'aluno'):
         messages.error(request, "Acesso restrito a alunos.")
         return redirect('login_aluno')
 
     aluno = request.user.aluno
+    agora = timezone.now()
+
+    # ── Matrículas com dados relacionados ────────────────────
+    matriculas = (
+        Matricula.objects
+        .filter(id_aluno=aluno)
+        .select_related(
+            'id_curso',
+            'id_turma',
+            'id_pagamento',
+        )
+        .order_by('-ano_letivo')
+    )
+
+    # ── Aulas do aluno — base para todos os KPIs ─────────────
+    # select_related evita N+1 queries
+    aulas_qs = (
+        AulaDoAluno.objects
+        .filter(id_aluno=aluno)
+        .select_related(
+            'id_aula',
+            'id_aula__id_curso',
+            'id_aula__id_professor',
+            'id_aula__id_sala',
+            'id_aula__id_turma',
+        )
+        .order_by('data_inicio')
+    )
+
+    # ── KPIs de presença ─────────────────────────────────────
+    # Só conta aulas com presença registada (não None)
+    aulas_com_registo = aulas_qs.exclude(presenca=None)
+    total_presencas   = aulas_com_registo.filter(presenca=True).count()
+    total_faltas      = aulas_com_registo.filter(presenca=False).count()
+    total_aulas       = aulas_com_registo.count()
+    percentagem       = (
+        round(total_presencas / total_aulas * 100)
+        if total_aulas > 0 else 0
+    )
+
+    # ── Próxima aula ─────────────────────────────────────────
+    proxima_aula = (
+        aulas_qs
+        .filter(data_inicio__gt=agora)
+        .order_by('data_inicio')
+        .first()
+    )
+
+    # ── Aulas recentes — últimas 5 passadas ──────────────────
+    aulas_recentes = (
+        aulas_qs
+        .filter(data_inicio__lte=agora)
+        .order_by('-data_inicio')[:5]
+    )
+
+    # ── Dados para o calendário (injectados no template) ─────
+    # Opção B confirmada — sem AJAX
+    eventos_calendario = []
+    for ada in aulas_qs:
+        if ada.data_inicio:
+            curso_nome = ''
+            if ada.id_aula and ada.id_aula.id_curso:
+                curso_nome = ada.id_aula.id_curso.nome or ''
+
+            eventos_calendario.append({
+                'data':        ada.data_inicio.strftime('%Y-%m-%d'),
+                'hora_inicio': ada.data_inicio.strftime('%H:%M'),
+                'hora_fim':    (
+                    ada.data_final.strftime('%H:%M')
+                    if ada.data_final else ''
+                ),
+                'presenca':    ada.presenca,
+                'curso':       curso_nome,
+            })
+
     return render(request, 'escola_musica/aluno_dashboard.html', {
-        'aluno': aluno,
+        'aluno':            aluno,
+        'matriculas':       matriculas,
+        'total_presencas':  total_presencas,
+        'total_faltas':     total_faltas,
+        'total_aulas':      total_aulas,
+        'percentagem':      percentagem,
+        'proxima_aula':     proxima_aula,
+        'aulas_recentes':   aulas_recentes,
+        'eventos_calendario': eventos_calendario,
     })
 
 

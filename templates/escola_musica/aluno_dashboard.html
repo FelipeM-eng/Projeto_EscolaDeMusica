@@ -1,25 +1,395 @@
 {% extends 'escola_musica/base.html' %}
 {% load static %}
 
-{% block titulo %}Dashboard — Aluno{% endblock %}
+{% block titulo %}Dashboard — {{ aluno.nome }}{% endblock %}
 
 {% block css_extra %}
-  <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/aluno_dashboard.css' %}">
 {% endblock %}
 
 {% block conteudo %}
-<div class="pagina-cabecalho">
-  <div>
-    <h1 class="pagina-titulo">Bem-vindo, {{ aluno.nome }}</h1>
-    <p class="pagina-subtitulo">Área reservada ao aluno</p>
-  </div>
-</div>
 
-<div class="estado-vazio">
-  <div class="estado-vazio__icone">🎓</div>
-  <p class="estado-vazio__texto">
-    O teu dashboard está em construção.<br>
-    Em breve poderás consultar as tuas matrículas e aulas aqui.
-  </p>
-</div>
+<!-- ══ CABEÇALHO ══ -->
+<header class="dash-header" aria-label="Cabeçalho do dashboard">
+  <div class="dash-header__info">
+    <p class="dash-header__pre">Área do Aluno</p>
+    <h1 class="dash-header__nome">{{ aluno.nome }}</h1>
+    <p class="dash-header__sub">
+      {% if matriculas.count == 1 %}
+        1 matrícula ativa
+      {% elif matriculas.count == 0 %}
+        Nenhuma matrícula ativa
+      {% else %}
+        {{ matriculas.count }} matrículas ativas
+      {% endif %}
+    </p>
+  </div>
+</header>
+
+
+<!-- ══ KPI CARDS ══ -->
+<section class="dash-kpis" aria-label="Indicadores de desempenho">
+
+  <!-- KPI: Presenças -->
+  <article class="kpi-card kpi-card--presenca" aria-labelledby="kpi-presencas">
+    <div class="kpi-card__icone" aria-hidden="true">✓</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor" id="kpi-presencas">{{ total_presencas }}</span>
+      <span class="kpi-card__label">Presenças</span>
+    </div>
+    <div class="kpi-card__barra-wrapper" aria-hidden="true">
+      <div class="kpi-card__barra kpi-card__barra--presenca"
+          data-valor="{{ percentagem }}"></div>
+    </div>
+  </article>
+
+  <!-- KPI: Faltas -->
+  <article class="kpi-card kpi-card--falta" aria-labelledby="kpi-faltas">
+    <div class="kpi-card__icone" aria-hidden="true">✗</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor" id="kpi-faltas">{{ total_faltas }}</span>
+      <span class="kpi-card__label">Faltas</span>
+    </div>
+
+    {% if total_aulas > 0 %}
+      {% widthratio total_faltas total_aulas 100 as percentagem_faltas %}
+      <div class="kpi-card__barra-wrapper" aria-hidden="true">
+        <div class="kpi-card__barra kpi-card__barra--falta"
+             data-valor="{{ percentagem_faltas }}"></div>
+      </div>
+    {% else %}
+      <div class="kpi-card__barra-wrapper" aria-hidden="true">
+        <div class="kpi-card__barra kpi-card__barra--falta"
+             style="width: 0%;"
+             data-valor="0"></div>
+      </div>
+    {% endif %}
+  </article>
+
+  <!-- KPI: % Presença -->
+  <article class="kpi-card kpi-card--percentagem" aria-labelledby="kpi-percentagem">
+    <div class="kpi-card__icone" aria-hidden="true">◎</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor" id="kpi-percentagem">
+        {{ percentagem }}<span class="kpi-card__unidade">%</span>
+      </span>
+      <span class="kpi-card__label">Taxa de presença</span>
+    </div>
+
+    <div class="kpi-card__anel" aria-hidden="true">
+      <svg viewBox="0 0 36 36" class="kpi-anel-svg">
+        <circle class="kpi-anel-fundo" cx="18" cy="18" r="15.9"></circle>
+        <circle class="kpi-anel-prog"
+                cx="18"
+                cy="18"
+                r="15.9"
+                data-percentagem="{{ percentagem }}"></circle>
+      </svg>
+    </div>
+  </article>
+
+  <!-- KPI: Próxima aula -->
+  <article class="kpi-card kpi-card--proxima" aria-labelledby="kpi-proxima">
+    <div class="kpi-card__icone" aria-hidden="true">→</div>
+    <div class="kpi-card__corpo">
+      {% if proxima_aula %}
+        <span class="kpi-card__valor kpi-card__valor--data" id="kpi-proxima">
+          {{ proxima_aula.data_inicio|date:"d/m" }}
+        </span>
+        <span class="kpi-card__label">
+          Próxima aula —
+          {{ proxima_aula.data_inicio|time:"H:i" }}
+          {% if proxima_aula.id_aula and proxima_aula.id_aula.id_curso %}
+            · {{ proxima_aula.id_aula.id_curso.nome }}
+          {% endif %}
+        </span>
+      {% else %}
+        <span class="kpi-card__valor kpi-card__valor--vazio" id="kpi-proxima">—</span>
+        <span class="kpi-card__label">Sem aulas agendadas</span>
+      {% endif %}
+    </div>
+  </article>
+
+</section>
+
+
+<!-- ══ CONTEÚDO PRINCIPAL — grid 2 colunas ══ -->
+<div class="dash-grid" role="main">
+
+  <!-- COLUNA ESQUERDA -->
+  <div class="dash-col dash-col--principal">
+
+    <!-- MATRÍCULAS ACTIVAS -->
+    <section class="dash-secao" aria-labelledby="titulo-matriculas">
+      <h2 class="dash-secao__titulo" id="titulo-matriculas">
+        <span class="dash-secao__icone" aria-hidden="true">📋</span>
+        Matrículas
+      </h2>
+
+      {% if matriculas %}
+        <div class="matriculas-lista" role="list">
+          {% for m in matriculas %}
+          <article class="matricula-card" role="listitem"
+                   aria-labelledby="mat-{{ m.id_matricula }}-titulo">
+            <div class="matricula-card__header">
+              <div class="matricula-card__info">
+                <h3 class="matricula-card__curso" id="mat-{{ m.id_matricula }}-titulo">
+                  {{ m.id_curso.nome|default:"Curso não disponível" }}
+                </h3>
+                <p class="matricula-card__turma">
+                  {% if m.id_turma %}
+                    {{ m.id_turma.nome_turma|default:"—" }}
+                  {% else %}
+                    —
+                  {% endif %}
+
+                  {% if m.ano_letivo %}
+                    <span class="matricula-card__sep" aria-hidden="true">·</span>
+                    {{ m.ano_letivo }}
+                  {% endif %}
+
+                  {% if m.id_turma and m.id_turma.horario %}
+                    <span class="matricula-card__sep" aria-hidden="true">·</span>
+                    {{ m.id_turma.horario }}
+                  {% endif %}
+                </p>
+              </div>
+
+              <!-- Estado do pagamento — baseado nos 3 valores reais da BD -->
+              {% if m.id_pagamento %}
+                <span class="matricula-card__status
+                  {% if m.id_pagamento.status == 'Pago' %}status--pago
+                  {% elif m.id_pagamento.status == 'Pendente' %}status--pendente
+                  {% elif m.id_pagamento.status == 'Cancelado' %}status--cancelado
+                  {% else %}status--desconhecido
+                  {% endif %}"
+                  aria-label="Estado do pagamento: {{ m.id_pagamento.status }}">
+                  {{ m.id_pagamento.status }}
+                </span>
+              {% else %}
+                <span class="matricula-card__status status--desconhecido"
+                      aria-label="Sem registo de pagamento">
+                  Sem pagamento
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Detalhes financeiros se existirem -->
+            {% if m.id_pagamento and m.id_pagamento.valor_pago %}
+            <div class="matricula-card__financeiro">
+              <span class="matricula-card__valor">
+                {{ m.id_pagamento.valor_pago }} €
+              </span>
+              {% if m.id_pagamento.data_pagamento %}
+                <span class="matricula-card__data-pag">
+                  pago em {{ m.id_pagamento.data_pagamento|date:"d/m/Y" }}
+                </span>
+              {% endif %}
+            </div>
+            {% endif %}
+
+          </article>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="dash-vazio" role="status">
+          <span class="dash-vazio__icone" aria-hidden="true">📋</span>
+          <p class="dash-vazio__texto">Não tens matrículas registadas.</p>
+        </div>
+      {% endif %}
+    </section>
+
+
+    <!-- AULAS RECENTES -->
+    <section class="dash-secao" aria-labelledby="titulo-aulas">
+      <h2 class="dash-secao__titulo" id="titulo-aulas">
+        <span class="dash-secao__icone" aria-hidden="true">🎵</span>
+        Aulas Recentes
+      </h2>
+
+      {% if aulas_recentes %}
+        <div class="aulas-tabela-wrapper" role="region"
+             aria-label="Tabela de aulas recentes">
+          <table class="aulas-tabela" aria-labelledby="titulo-aulas">
+            <thead>
+              <tr>
+                <th scope="col">Data</th>
+                <th scope="col">Hora</th>
+                <th scope="col">Curso</th>
+                <th scope="col">Professor</th>
+                <th scope="col">Presença</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ada in aulas_recentes %}
+              <tr class="aulas-tabela__linha">
+                <td>{{ ada.data_inicio|date:"d/m/Y" }}</td>
+                <td>
+                  {{ ada.data_inicio|time:"H:i" }}
+                  {% if ada.data_final %}
+                    – {{ ada.data_final|time:"H:i" }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ada.id_aula and ada.id_aula.id_curso %}
+                    {{ ada.id_aula.id_curso.nome|default:"—" }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ada.id_aula and ada.id_aula.id_professor %}
+                    {{ ada.id_aula.id_professor.nome|default:"—" }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ada.presenca == True %}
+                    <span class="presenca-badge presenca-badge--presente"
+                          aria-label="Presente">✓</span>
+                  {% elif ada.presenca == False %}
+                    <span class="presenca-badge presenca-badge--falta"
+                          aria-label="Falta">✗</span>
+                  {% else %}
+                    <span class="presenca-badge presenca-badge--sem-registo"
+                          aria-label="Sem registo">–</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="dash-vazio" role="status">
+          <span class="dash-vazio__icone" aria-hidden="true">🎵</span>
+          <p class="dash-vazio__texto">Sem aulas registadas.</p>
+        </div>
+      {% endif %}
+    </section>
+
+  </div><!-- /dash-col--principal -->
+
+
+  <!-- COLUNA DIREITA — SIDEBAR -->
+  <aside class="dash-col dash-col--sidebar" aria-label="Calendário e próxima aula">
+
+    <!-- CALENDÁRIO -->
+    <section class="dash-secao dash-secao--calendario"
+             aria-labelledby="titulo-calendario">
+      <h2 class="dash-secao__titulo" id="titulo-calendario">
+        <span class="dash-secao__icone" aria-hidden="true">📅</span>
+        Calendário
+        <span class="calendario-mes-label" id="calendario-mes-label"
+              aria-live="polite"></span>
+      </h2>
+
+      <!-- Navegação do calendário -->
+      <div class="calendario-nav" role="navigation"
+           aria-label="Navegação do calendário">
+        <button class="calendario-btn"
+                id="cal-prev"
+                aria-label="Mês anterior">‹</button>
+        <button class="calendario-btn"
+                id="cal-next"
+                aria-label="Próximo mês">›</button>
+      </div>
+
+      <!-- Grid do calendário — preenchido pelo JS -->
+      <div class="calendario-grid" id="calendario-grid"
+           role="grid" aria-labelledby="titulo-calendario">
+        <!-- Cabeçalho dos dias da semana -->
+        <div class="calendario-header" role="row" aria-hidden="true">
+          <span>Seg</span>
+          <span>Ter</span>
+          <span>Qua</span>
+          <span>Qui</span>
+          <span>Sex</span>
+          <span>Sáb</span>
+          <span>Dom</span>
+        </div>
+        <!-- Dias preenchidos pelo JS -->
+        <div class="calendario-dias" id="calendario-dias" role="rowgroup">
+        </div>
+      </div>
+
+      <!-- Legenda -->
+      <div class="calendario-legenda" aria-label="Legenda do calendário">
+        <span class="legenda-item">
+          <span class="legenda-dot legenda-dot--presente" aria-hidden="true"></span>
+          Presente
+        </span>
+        <span class="legenda-item">
+          <span class="legenda-dot legenda-dot--falta" aria-hidden="true"></span>
+          Falta
+        </span>
+        <span class="legenda-item">
+          <span class="legenda-dot legenda-dot--agendada" aria-hidden="true"></span>
+          Agendada
+        </span>
+      </div>
+    </section>
+
+
+    <!-- PRÓXIMA AULA — detalhe -->
+    {% if proxima_aula %}
+    <section class="dash-secao dash-secao--proxima"
+             aria-labelledby="titulo-proxima">
+      <h2 class="dash-secao__titulo" id="titulo-proxima">
+        <span class="dash-secao__icone" aria-hidden="true">→</span>
+        Próxima Aula
+      </h2>
+      <div class="proxima-aula-card">
+        <div class="proxima-aula__data-bloco">
+          <span class="proxima-aula__dia">
+            {{ proxima_aula.data_inicio|date:"d" }}
+          </span>
+          <span class="proxima-aula__mes">
+            {{ proxima_aula.data_inicio|date:"M Y" }}
+          </span>
+        </div>
+        <div class="proxima-aula__detalhe">
+          {% if proxima_aula.id_aula %}
+            {% if proxima_aula.id_aula.id_curso %}
+              <p class="proxima-aula__curso">
+                {{ proxima_aula.id_aula.id_curso.nome|default:"—" }}
+              </p>
+            {% endif %}
+            {% if proxima_aula.id_aula.id_professor %}
+              <p class="proxima-aula__prof">
+                {{ proxima_aula.id_aula.id_professor.nome|default:"—" }}
+              </p>
+            {% endif %}
+            {% if proxima_aula.id_aula.id_sala %}
+              <p class="proxima-aula__sala">
+                Sala: {{ proxima_aula.id_aula.id_sala.nome|default:"—" }}
+              </p>
+            {% endif %}
+          {% endif %}
+          <p class="proxima-aula__hora">
+            {{ proxima_aula.data_inicio|time:"H:i" }}
+            {% if proxima_aula.data_final %}
+              — {{ proxima_aula.data_final|time:"H:i" }}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+  </aside><!-- /dash-col--sidebar -->
+
+</div><!-- /dash-grid -->
+
+
+<!-- Dados do calendário — injectados pelo Django, lidos pelo JS -->
+<!-- Sem dados sensíveis — apenas datas, horas e nomes de cursos -->
+{{ eventos_calendario|json_script:"calendario-dados" }}
+
+{% endblock %}
+
+{% block js_extra %}
+  <script src="{% static 'escola_musica/js/aluno_dashboard.js' %}"></script>
 {% endblock %}

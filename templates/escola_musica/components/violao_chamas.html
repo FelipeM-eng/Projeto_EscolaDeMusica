@@ -1,0 +1,138 @@
+<!-- Componente: Violão em Chamas (SVG Animado) -->
+<div class="mainpage__fundo" aria-hidden="true">
+    <svg class="violao-fogo" viewBox="0 0 800 900"
+         xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="bgGrad" cx="50%" cy="65%" r="70%">
+          <stop offset="0%" stop-color="#1a0800"/>
+          <stop offset="100%" stop-color="#000000"/>
+        </radialGradient>
+        <radialGradient id="corpoGrad" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stop-color="#5c2a00"/>
+          <stop offset="100%" stop-color="#2a1000"/>
+        </radialGradient>
+        <radialGradient id="brasaGrad" cx="50%" cy="80%" r="60%">
+          <stop offset="0%" stop-color="#ff6600" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#ff0000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Fundo escuro -->
+      <rect width="800" height="900" fill="url(#bgGrad)"/>
+
+      <!-- Brilho de brasa -->
+      <ellipse cx="400" cy="830" rx="220" ry="60" fill="url(#brasaGrad)"/>
+
+      <!-- CORPO DO VIOLÃO -->
+      <ellipse cx="400" cy="650" rx="130" ry="150" fill="url(#corpoGrad)" stroke="#8b4500" stroke-width="2.5"/>
+      <ellipse cx="400" cy="420" rx="95"  ry="105" fill="url(#corpoGrad)" stroke="#8b4500" stroke-width="2.5"/>
+      <rect x="340" y="500" width="120" height="70" fill="#2a1000"/>
+      <ellipse cx="400" cy="500" rx="60" ry="24" fill="#2a1000"/>
+      <ellipse cx="400" cy="570" rx="60" ry="24" fill="#2a1000"/>
+
+      <!-- Soundhole -->
+      <circle cx="400" cy="540" r="40" fill="#0a0500" stroke="#6b3500" stroke-width="2"/>
+      <circle cx="400" cy="540" r="32" fill="none" stroke="#8b4500" stroke-width="1.5"/>
+
+      <!-- Braço -->
+      <rect x="383" y="200" width="34" height="240" rx="8" fill="#3d1a00" stroke="#6b3500" stroke-width="2"/>
+      <line x1="384" y1="240" x2="416" y2="240" stroke="#a0704a" stroke-width="1.5"/>
+      <line x1="384" y1="275" x2="416" y2="275" stroke="#a0704a" stroke-width="1.5"/>
+      <line x1="384" y1="310" x2="416" y2="310" stroke="#a0704a" stroke-width="1.5"/>
+      <line x1="384" y1="345" x2="416" y2="345" stroke="#a0704a" stroke-width="1.5"/>
+      <line x1="384" y1="380" x2="416" y2="380" stroke="#a0704a" stroke-width="1.5"/>
+
+      <!-- Cabeça + cravelhas -->
+      <rect x="375" y="148" width="50" height="58" rx="6" fill="#3d1a00" stroke="#6b3500" stroke-width="2"/>
+      <circle cx="385" cy="138" r="7" fill="#c8a000" stroke="#a07800" stroke-width="1.5"/>
+      <circle cx="400" cy="138" r="7" fill="#c8a000" stroke="#a07800" stroke-width="1.5"/>
+      <circle cx="415" cy="138" r="7" fill="#c8a000" stroke="#a07800" stroke-width="1.5"/>
+
+      <!-- Cordas -->
+      <line x1="389" y1="148" x2="372" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+      <line x1="394" y1="148" x2="382" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+      <line x1="399" y1="148" x2="397" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+      <line x1="404" y1="148" x2="410" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+      <line x1="409" y1="148" x2="422" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+      <line x1="414" y1="148" x2="435" y2="820" stroke="#d0d0d0" stroke-width="0.9" opacity="0.55"/>
+
+      <!-- CHAMAS -->
+      <!-- Chama vermelha exterior -->
+      <path d="M330 840 Q295 750 335 680 Q308 640 345 595 Q318 550 360 510 Q402 470 440 510 Q482 550 455 595 Q492 640 465 680 Q505 750 470 840 Z"
+        fill="#cc2200" opacity="0.85">
+        <animate attributeName="d" dur="2.1s" repeatCount="indefinite"
+          values="
+            M330 840 Q295 750 335 680 Q308 640 345 595 Q318 550 360 510 Q402 470 440 510 Q482 550 455 595 Q492 640 465 680 Q505 750 470 840 Z;
+            M335 840 Q290 740 340 668 Q312 628 348 580 Q322 540 362 500 Q402 462 438 500 Q478 540 452 580 Q488 628 460 668 Q510 740 465 840 Z;
+            M330 840 Q295 750 335 680 Q308 640 345 595 Q318 550 360 510 Q402 470 440 510 Q482 550 455 595 Q492 640 465 680 Q505 750 470 840 Z"/>
+      </path>
+
+      <!-- Chama laranja -->
+      <path d="M348 840 Q318 770 350 708 Q330 672 358 638 Q338 602 368 570 Q400 540 432 570 Q462 602 442 638 Q470 672 450 708 Q482 770 452 840 Z"
+        fill="#ff5500" opacity="0.9">
+        <animate attributeName="d" dur="1.7s" repeatCount="indefinite"
+          values="
+            M348 840 Q318 770 350 708 Q330 672 358 638 Q338 602 368 570 Q400 540 432 570 Q462 602 442 638 Q470 672 450 708 Q482 770 452 840 Z;
+            M352 840 Q315 762 354 698 Q334 660 362 625 Q342 590 370 558 Q400 528 430 558 Q458 590 438 625 Q466 660 446 698 Q486 762 448 840 Z;
+            M348 840 Q318 770 350 708 Q330 672 358 638 Q338 602 368 570 Q400 540 432 570 Q462 602 442 638 Q470 672 450 708 Q482 770 452 840 Z"/>
+      </path>
+
+      <!-- Chama amarela interior -->
+      <path d="M365 840 Q345 790 368 748 Q352 720 372 692 Q355 665 380 640 Q400 618 420 640 Q445 665 428 692 Q448 720 432 748 Q455 790 435 840 Z"
+        fill="#ffaa00" opacity="0.92">
+        <animate attributeName="d" dur="1.3s" repeatCount="indefinite"
+          values="
+            M365 840 Q345 790 368 748 Q352 720 372 692 Q355 665 380 640 Q400 618 420 640 Q445 665 428 692 Q448 720 432 748 Q455 790 435 840 Z;
+            M368 840 Q342 782 372 738 Q356 710 374 680 Q358 653 382 628 Q400 608 418 628 Q442 653 426 680 Q444 710 428 738 Q458 782 432 840 Z;
+            M365 840 Q345 790 368 748 Q352 720 372 692 Q355 665 380 640 Q400 618 420 640 Q445 665 428 692 Q448 720 432 748 Q455 790 435 840 Z"/>
+      </path>
+
+      <!-- Núcleo branco-amarelo -->
+      <path d="M382 840 Q370 808 382 780 Q374 762 385 745 Q375 728 390 712 Q400 700 410 712 Q425 728 415 745 Q426 762 418 780 Q430 808 418 840 Z"
+        fill="#ffee88" opacity="0.85">
+        <animate attributeName="d" dur="1.0s" repeatCount="indefinite"
+          values="
+            M382 840 Q370 808 382 780 Q374 762 385 745 Q375 728 390 712 Q400 700 410 712 Q425 728 415 745 Q426 762 418 780 Q430 808 418 840 Z;
+            M384 840 Q368 804 384 775 Q376 756 386 738 Q377 721 391 706 Q400 694 409 706 Q423 721 414 738 Q424 756 414 775 Q432 804 416 840 Z;
+            M382 840 Q370 808 382 780 Q374 762 385 745 Q375 728 390 712 Q400 700 410 712 Q425 728 415 745 Q426 762 418 780 Q430 808 418 840 Z"/>
+      </path>
+
+      <!-- Faúlhas animadas -->
+      <circle cx="355" cy="520" r="3" fill="#ff8800">
+        <animate attributeName="cy"      values="520;420;320" dur="2.2s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="355;338;320" dur="2.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.5;0"     dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="445" cy="490" r="2.5" fill="#ffcc00">
+        <animate attributeName="cy"      values="490;370;260" dur="1.8s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="445;462;475" dur="1.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.4;0"     dur="1.8s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="400" cy="500" r="3.5" fill="#ff6600">
+        <animate attributeName="cy"      values="500;380;240" dur="2.6s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="400;385;372" dur="2.6s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.5;0"     dur="2.6s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="420" cy="560" r="2" fill="#ffdd00">
+        <animate attributeName="cy"      values="560;440;330" dur="2.0s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="420;436;448" dur="2.0s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.4;0"     dur="2.0s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="375" cy="580" r="2.5" fill="#ff9900">
+        <animate attributeName="cy"      values="580;455;340" dur="1.6s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="375;360;348" dur="1.6s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0.5;0"     dur="1.6s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="408" cy="530" r="1.8" fill="#ffffff">
+        <animate attributeName="cy"      values="530;400;280" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="cx"      values="408;398;390" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.9;0.3;0"   dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Halo de calor pulsante -->
+      <ellipse cx="400" cy="690" rx="140" ry="180" fill="none" stroke="#ff4400" stroke-width="1.5" opacity="0.2">
+        <animate attributeName="opacity" values="0.2;0.5;0.2" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="rx"      values="140;155;140" dur="2s" repeatCount="indefinite"/>
+      </ellipse>
+    </svg>
+</div>

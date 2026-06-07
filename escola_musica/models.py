@@ -288,20 +288,35 @@ class Aula(models.Model):
 
 
 class AulaDoAluno(models.Model):
+
+    id = models.AutoField(primary_key=True)
+
     id_aluno = models.ForeignKey(
         Aluno,
         on_delete=models.DO_NOTHING,
-        db_column='id_aluno', 
+        db_column='id_aluno',
     )
+
     id_aula = models.ForeignKey(
         Aula,
         on_delete=models.DO_NOTHING,
         db_column='id_aula'
     )
 
-    data_inicio = models.DateTimeField(null=True, blank=True)
-    data_final = models.DateTimeField(null=True, blank=True)
-    presenca = models.BooleanField(null=True, blank=True)
+    data_inicio = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    data_final = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    presenca = models.BooleanField(
+        null=True,
+        blank=True
+    )
 
     class Meta:
         managed = False

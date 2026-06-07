@@ -1,0 +1,811 @@
+/* ═══════════════════════════════════════════════
+   ALUNO DASHBOARD — Dark Premium
+   Ficheiro: aluno_dashboard.css
+═══════════════════════════════════════════════ */
+
+
+/* ── Variáveis locais ── */
+:root {
+  --dash-gap:        1.25rem;
+  --dash-raio:       16px;
+  --dash-superficie: rgba(255, 255, 255, 0.04);
+  --dash-borda:      rgba(255, 255, 255, 0.07);
+  --dash-blur:       blur(16px);
+
+  --cor-presente:    #16a34a;
+  --cor-falta:       #dc2626;
+  --cor-agendada:    #c8a000;
+  --cor-misto:       #7b4fa6;
+}
+
+
+/* ══════════════════════════════════════
+   CABEÇALHO
+══════════════════════════════════════ */
+
+.dash-header {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             1rem;
+  margin-bottom:   2rem;
+  flex-wrap:       wrap;
+}
+
+.dash-header__pre {
+  font-size:      0.7rem;
+  font-weight:    700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color:          var(--cor-texto-suave);
+  margin-bottom:  0.25rem;
+}
+
+.dash-header__nome {
+  font-size:      clamp(1.6rem, 3vw, 2.4rem);
+  font-weight:    800;
+  color:          var(--cor-texto);
+  line-height:    1.1;
+  letter-spacing: -0.02em;
+}
+
+.dash-header__sub {
+  font-size:    0.82rem;
+  color:        var(--cor-texto-suave);
+  margin-top:   0.35rem;
+}
+
+
+/* ══════════════════════════════════════
+   KPI CARDS
+══════════════════════════════════════ */
+
+.dash-kpis {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:                   var(--dash-gap);
+  margin-bottom:         2rem;
+}
+
+.kpi-card {
+  position:        relative;
+  background:      var(--dash-superficie);
+  border:          1px solid var(--dash-borda);
+  border-radius:   var(--dash-raio);
+  padding:         1.4rem 1.5rem;
+  display:         flex;
+  align-items:     center;
+  gap:             1rem;
+  overflow:        hidden;
+  backdrop-filter: var(--dash-blur);
+  -webkit-backdrop-filter: var(--dash-blur);
+
+  /* Estado inicial para animação de entrada */
+  opacity:   0;
+  transform: translateY(16px);
+  transition: opacity   0.5s ease,
+              transform 0.5s ease,
+              border-color 0.3s ease;
+}
+
+.kpi-card.card-visivel {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+/* Delay em cascata */
+.kpi-card:nth-child(1) { transition-delay: 0.05s; }
+.kpi-card:nth-child(2) { transition-delay: 0.12s; }
+.kpi-card:nth-child(3) { transition-delay: 0.19s; }
+.kpi-card:nth-child(4) { transition-delay: 0.26s; }
+
+/* Linha de cor no topo por tipo */
+.kpi-card--presenca   { border-top: 2px solid var(--cor-presente); }
+.kpi-card--falta      { border-top: 2px solid var(--cor-falta);    }
+.kpi-card--percentagem{ border-top: 2px solid var(--cor-acento);   }
+.kpi-card--proxima    { border-top: 2px solid var(--cor-primaria); }
+
+.kpi-card__icone {
+  font-size:   1.4rem;
+  opacity:     0.5;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.kpi-card--presenca    .kpi-card__icone { color: var(--cor-presente); opacity: 0.9; }
+.kpi-card--falta       .kpi-card__icone { color: var(--cor-falta);    opacity: 0.9; }
+.kpi-card--percentagem .kpi-card__icone { color: var(--cor-acento);   opacity: 0.9; }
+.kpi-card--proxima     .kpi-card__icone { color: var(--cor-primaria); opacity: 0.9; }
+
+.kpi-card__corpo {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.2rem;
+  flex:           1;
+}
+
+.kpi-card__valor {
+  font-size:   2rem;
+  font-weight: 800;
+  color:       var(--cor-texto);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-card__valor--data  { font-size: 1.6rem; }
+.kpi-card__valor--vazio { font-size: 1.4rem; opacity: 0.35; }
+
+.kpi-card__unidade {
+  font-size:   1.1rem;
+  font-weight: 600;
+  opacity:     0.7;
+}
+
+.kpi-card__label {
+  font-size:   0.75rem;
+  color:       var(--cor-texto-suave);
+  line-height: 1.4;
+}
+
+/* Barra de progresso */
+.kpi-card__barra-wrapper {
+  position:      absolute;
+  bottom:        0;
+  left:          0;
+  width:         100%;
+  height:        3px;
+  background:    rgba(255, 255, 255, 0.06);
+  border-radius: 0 0 var(--dash-raio) var(--dash-raio);
+  overflow:      hidden;
+}
+
+.kpi-card__barra {
+  height: 100%;
+}
+
+.kpi-card__barra--presenca { background: var(--cor-presente); }
+.kpi-card__barra--falta    { background: var(--cor-falta);    }
+
+/* Anel circular SVG */
+.kpi-card__anel {
+  width:       52px;
+  height:      52px;
+  flex-shrink: 0;
+}
+
+.kpi-anel-svg {
+  width:     100%;
+  height:    100%;
+  transform: rotate(-90deg);
+}
+
+.kpi-anel-fundo {
+  fill:         none;
+  stroke:       rgba(255, 255, 255, 0.08);
+  stroke-width: 2.8;
+}
+
+.kpi-anel-prog {
+  fill:             none;
+  stroke:           var(--cor-acento);
+  stroke-width:     2.8;
+  stroke-linecap:   round;
+  /* stroke-dasharray e strokeDashoffset definidos pelo JS */
+}
+
+
+/* ══════════════════════════════════════
+   GRID PRINCIPAL — 2 colunas
+══════════════════════════════════════ */
+
+.dash-grid {
+  display:               grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap:                   var(--dash-gap);
+  align-items:           start;
+}
+
+@media (max-width: 960px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-col--sidebar {
+    order: -1;  /* sidebar sobe em mobile */
+  }
+}
+
+.dash-col {
+  display:        flex;
+  flex-direction: column;
+  gap:            var(--dash-gap);
+}
+
+
+/* ══════════════════════════════════════
+   SECÇÕES
+══════════════════════════════════════ */
+
+.dash-secao {
+  background:      var(--dash-superficie);
+  border:          1px solid var(--dash-borda);
+  border-radius:   var(--dash-raio);
+  padding:         1.4rem 1.5rem;
+  backdrop-filter: var(--dash-blur);
+  -webkit-backdrop-filter: var(--dash-blur);
+}
+
+.dash-secao__titulo {
+  display:        flex;
+  align-items:    center;
+  gap:            0.5rem;
+  font-size:      0.78rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color:          var(--cor-texto-suave);
+  margin-bottom:  1.1rem;
+  padding-bottom: 0.75rem;
+  border-bottom:  1px solid var(--dash-borda);
+}
+
+.dash-secao__icone {
+  font-size: 0.9rem;
+  opacity:   0.7;
+}
+
+.dash-vazio {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        2rem 1rem;
+  text-align:     center;
+}
+
+.dash-vazio__icone {
+  font-size: 1.8rem;
+  opacity:   0.25;
+}
+
+.dash-vazio__texto {
+  font-size: 0.82rem;
+  color:     var(--cor-texto-suave);
+}
+
+
+/* ══════════════════════════════════════
+   MATRÍCULAS
+══════════════════════════════════════ */
+
+.matriculas-lista {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.75rem;
+}
+
+.matricula-card {
+  background:    rgba(255, 255, 255, 0.03);
+  border:        1px solid var(--dash-borda);
+  border-radius: 12px;
+  padding:       1rem 1.1rem;
+  transition:    border-color 0.3s ease,
+                 transform    0.3s ease,
+                 opacity      0.5s ease;
+
+  /* Animação de entrada */
+  opacity:   0;
+  transform: translateY(12px);
+}
+
+.matricula-card.card-visivel {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+.matricula-card:hover {
+  border-color: var(--cor-borda);
+}
+
+.matricula-card__header {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             0.75rem;
+}
+
+.matricula-card__curso {
+  font-size:   0.92rem;
+  font-weight: 700;
+  color:       var(--cor-texto);
+  margin:      0 0 0.2rem;
+}
+
+.matricula-card__turma {
+  font-size: 0.78rem;
+  color:     var(--cor-texto-suave);
+}
+
+.matricula-card__sep {
+  margin: 0 0.3rem;
+  opacity: 0.4;
+}
+
+/* Badges de status — baseados nos 3 valores reais da BD */
+.matricula-card__status {
+  display:        inline-flex;
+  align-items:    center;
+  padding:        0.2rem 0.7rem;
+  border-radius:  50px;
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space:    nowrap;
+  flex-shrink:    0;
+}
+
+.status--pago {
+  background: rgba(22, 163, 74,  0.15);
+  border:     1px solid rgba(22, 163, 74,  0.35);
+  color:      #4ade80;
+}
+
+.status--pendente {
+  background: rgba(200, 160, 0,  0.12);
+  border:     1px solid rgba(200, 160, 0,  0.35);
+  color:      var(--cor-primaria);
+}
+
+.status--cancelado {
+  background: rgba(220, 38,  38, 0.12);
+  border:     1px solid rgba(220, 38,  38, 0.35);
+  color:      #f87171;
+}
+
+.status--desconhecido {
+  background: rgba(255, 255, 255, 0.06);
+  border:     1px solid var(--dash-borda);
+  color:      var(--cor-texto-suave);
+}
+
+.matricula-card__financeiro {
+  display:     flex;
+  align-items: center;
+  gap:         0.6rem;
+  margin-top:  0.6rem;
+  padding-top: 0.6rem;
+  border-top:  1px solid var(--dash-borda);
+}
+
+.matricula-card__valor {
+  font-size:   0.88rem;
+  font-weight: 700;
+  color:       var(--cor-texto);
+}
+
+.matricula-card__data-pag {
+  font-size: 0.75rem;
+  color:     var(--cor-texto-suave);
+}
+
+
+/* ══════════════════════════════════════
+   TABELA DE AULAS
+══════════════════════════════════════ */
+
+.aulas-tabela-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.aulas-tabela {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       0.82rem;
+}
+
+.aulas-tabela th {
+  text-align:     left;
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color:          var(--cor-texto-suave);
+  padding:        0 0.75rem 0.65rem;
+  border-bottom:  1px solid var(--dash-borda);
+  white-space:    nowrap;
+}
+
+.aulas-tabela td {
+  padding:       0.65rem 0.75rem;
+  color:         var(--cor-texto);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.aulas-tabela__linha {
+  opacity:   0;
+  transform: translateX(-8px);
+  transition: opacity   0.4s ease,
+              transform 0.4s ease,
+              background 0.25s ease;
+}
+
+.aulas-tabela__linha.card-visivel {
+  opacity:   1;
+  transform: translateX(0);
+}
+
+.aulas-tabela__linha:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.aulas-tabela__linha:last-child td {
+  border-bottom: none;
+}
+
+/* Badges de presença */
+.presenca-badge {
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  width:          24px;
+  height:         24px;
+  border-radius:  50%;
+  font-size:      0.75rem;
+  font-weight:    700;
+}
+
+.presenca-badge--presente {
+  background: rgba(22, 163, 74, 0.15);
+  color:      #4ade80;
+}
+
+.presenca-badge--falta {
+  background: rgba(220, 38, 38, 0.15);
+  color:      #f87171;
+}
+
+.presenca-badge--sem-registo {
+  background: rgba(255, 255, 255, 0.06);
+  color:      var(--cor-texto-suave);
+}
+
+
+/* ══════════════════════════════════════
+   CALENDÁRIO
+══════════════════════════════════════ */
+
+.dash-secao--calendario {
+  padding-bottom: 1.1rem;
+}
+
+.dash-secao--calendario .dash-secao__titulo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.calendario-mes-label {
+  justify-self: end;
+}
+
+.calendario-nav {
+  display:         flex;
+  justify-content: flex-end;
+  gap:             0.4rem;
+  margin-bottom:   0.75rem;
+  margin-top:      0;
+}
+
+.calendario-btn {
+  width:       30px;
+  height:      30px;
+  background:  rgba(255, 255, 255, 0.05);
+  border:      1px solid var(--dash-borda);
+  border-radius: 50%;
+  color:       var(--cor-texto);
+  font-size:   1rem;
+  cursor:      pointer;
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+  transition:  background   0.2s ease,
+               border-color 0.2s ease;
+  line-height: 1;
+}
+
+.calendario-btn:hover {
+  background:   rgba(201, 168, 76, 0.12);
+  border-color: var(--cor-primaria);
+  color:        var(--cor-primaria);
+}
+
+.calendario-grid {
+  width: 100%;
+}
+
+/* Cabeçalho seg-dom */
+.calendario-header {
+  display:               grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom:         0.3rem;
+}
+
+.calendario-header span {
+  text-align:     center;
+  font-size:      0.62rem;
+  font-weight:    700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color:          rgba(255, 255, 255, 0.25);
+  padding:        0.2rem 0;
+}
+
+/* Grid de dias */
+.calendario-dias {
+  display:               grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap:                   2px;
+}
+
+.cal-dia {
+  position:        relative;
+  aspect-ratio:    1;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  border-radius:   8px;
+  cursor:          default;
+  transition:      background 0.2s ease;
+}
+
+.cal-dia--vazio {
+  pointer-events: none;
+}
+
+.cal-dia__num {
+  font-size:   0.78rem;
+  font-weight: 500;
+  color:       var(--cor-texto-suave);
+  line-height: 1;
+}
+
+/* Hoje */
+.cal-dia--hoje .cal-dia__num {
+  color:       var(--cor-primaria);
+  font-weight: 800;
+}
+
+.cal-dia--hoje::after {
+  content:       '';
+  position:      absolute;
+  inset:         0;
+  border-radius: 8px;
+  border:        1px solid rgba(201, 168, 76, 0.4);
+  pointer-events: none;
+}
+
+/* Estados */
+.cal-dia--presente {
+  background: rgba(22, 163, 74, 0.15);
+}
+.cal-dia--presente .cal-dia__num {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.cal-dia--falta {
+  background: rgba(220, 38, 38, 0.15);
+}
+.cal-dia--falta .cal-dia__num {
+  color: #f87171;
+  font-weight: 700;
+}
+
+.cal-dia--agendada {
+  background: rgba(201, 168, 76, 0.10);
+}
+.cal-dia--agendada .cal-dia__num {
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.cal-dia--misto {
+  background: rgba(123, 79, 166, 0.15);
+}
+.cal-dia--misto .cal-dia__num {
+  color: #c084fc;
+  font-weight: 700;
+}
+
+/* Ponto indicador */
+.cal-dia__ponto {
+  width:         4px;
+  height:        4px;
+  border-radius: 50%;
+  background:    currentColor;
+  opacity:       0.6;
+  margin-top:    2px;
+}
+
+/* Tooltip */
+.calendario-tooltip {
+  position:        fixed;
+  z-index:         9000;
+  background:      rgba(10, 10, 15, 0.95);
+  border:          1px solid var(--dash-borda);
+  border-radius:   10px;
+  padding:         0.7rem 0.9rem;
+  font-size:       0.75rem;
+  color:           var(--cor-texto);
+  backdrop-filter: blur(12px);
+  pointer-events:  none;
+  display:         none;
+  min-width:       160px;
+  max-width: min(260px, calc(100vw - 2rem));
+  box-shadow:      0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip-linha {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.15rem;
+  padding:        0.35rem 0;
+  border-bottom:  1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tooltip-linha:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tooltip-estado {
+  font-weight: 700;
+  font-size:   0.72rem;
+}
+
+.tooltip-curso {
+  color:   var(--cor-texto-suave);
+  font-size: 0.72rem;
+}
+
+.tooltip-hora {
+  color:     var(--cor-primaria);
+  font-size: 0.68rem;
+}
+
+/* Legenda */
+.calendario-legenda {
+  display:         flex;
+  gap:             1rem;
+  margin-top:      0.9rem;
+  padding-top:     0.75rem;
+  border-top:      1px solid var(--dash-borda);
+  flex-wrap:       wrap;
+}
+
+.legenda-item {
+  display:     flex;
+  align-items: center;
+  gap:         0.35rem;
+  font-size:   0.68rem;
+  color:       var(--cor-texto-suave);
+}
+
+.legenda-dot {
+  width:         7px;
+  height:        7px;
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+
+.legenda-dot--presente { background: var(--cor-presente); }
+.legenda-dot--falta    { background: var(--cor-falta);    }
+.legenda-dot--agendada { background: var(--cor-agendada); }
+
+
+/* ══════════════════════════════════════
+   PRÓXIMA AULA
+══════════════════════════════════════ */
+
+.proxima-aula-card {
+  display:     flex;
+  gap:         1rem;
+  align-items: flex-start;
+
+  opacity:   0;
+  transform: translateY(10px);
+  transition: opacity   0.5s ease 0.2s,
+              transform 0.5s ease 0.2s;
+}
+
+.proxima-aula-card.card-visivel {
+  opacity:   1;
+  transform: translateY(0);
+}
+
+.proxima-aula__data-bloco {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  justify-content: center;
+  background:     rgba(201, 168, 76, 0.10);
+  border:         1px solid rgba(201, 168, 76, 0.25);
+  border-radius:  12px;
+  padding:        0.7rem 0.9rem;
+  min-width:      58px;
+  flex-shrink:    0;
+}
+
+.proxima-aula__dia {
+  font-size:   1.6rem;
+  font-weight: 800;
+  color:       var(--cor-primaria);
+  line-height: 1;
+}
+
+.proxima-aula__mes {
+  font-size:      0.62rem;
+  font-weight:    600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color:          var(--cor-texto-suave);
+  margin-top:     0.2rem;
+}
+
+.proxima-aula__detalhe {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.25rem;
+}
+
+.proxima-aula__curso {
+  font-size:   0.9rem;
+  font-weight: 700;
+  color:       var(--cor-texto);
+}
+
+.proxima-aula__prof,
+.proxima-aula__sala {
+  font-size: 0.78rem;
+  color:     var(--cor-texto-suave);
+}
+
+.proxima-aula__hora {
+  font-size:   0.78rem;
+  color:       var(--cor-primaria);
+  font-weight: 600;
+  margin-top:  0.15rem;
+}
+
+
+/* ══════════════════════════════════════
+   RESPONSIVO
+══════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .dash-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-card__valor {
+    font-size: 1.6rem;
+  }
+
+  .aulas-tabela th:nth-child(4),
+  .aulas-tabela td:nth-child(4) {
+    display: none;  /* oculta coluna professor em mobile */
+  }
+
+  .calendario-legenda {
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .dash-kpis {
+    grid-template-columns: 1fr;
+  }
+}
