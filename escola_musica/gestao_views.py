@@ -25,10 +25,11 @@ from .gestao_forms import (
     AssociarPerfilForm,
     PasswordForm,
 )
-from .models import Aluno, Professor
+from .models import Aluno, Professor, Matricula
 
 audit_log = logging.getLogger('gestao_auditoria')
 logger    = logging.getLogger('escola_musica')
+contas_logger = logging.getLogger('contas_log')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -750,17 +751,62 @@ def gestao_utilizador_grupos(request, pk, alvo=None):
 @require_POST
 def gestao_utilizador_toggle(request, pk, alvo=None):
     """
-    Activa/desactiva conta.
-    Protecções:
-    - Não desactiva a própria conta (no decorator)
-    - Não desactiva superutilizadores (no decorator)
-    - POST obrigatório + CSRF
+    Ativa/desativa conta.
+
+    Regras:
+    - Não permite alterar a própria conta.
+    - Não permite alterar superutilizadores.
+    - Ao activar aluno, exige que exista pelo menos uma matrícula.
+    - Professores/staff sem perfil de aluno não são bloqueados por esta regra.
     """
+
     try:
         with transaction.atomic():
+
+            # Se a conta está inativa, a operação actual é ATIVAR.
+            if not alvo.is_active:
+                try:
+                    aluno = alvo.aluno
+                except Aluno.DoesNotExist:
+                    aluno = None
+                except AttributeError:
+                    aluno = None
+
+                if aluno:
+                    tem_matricula = Matricula.objects.filter(
+                        id_aluno=aluno
+                    ).exists()
+
+                    if not tem_matricula:
+                        _audit(
+                            request.user.username,
+                            'TOGGLE_CONTA',
+                            alvo=alvo.username,
+                            resultado='BLOQUEADO',
+                            detalhe='aluno_sem_matricula'
+                        )
+
+                        contas_logger.warning(
+                            f"[BLOQUEAR_ATIVACAO] "
+                            f"actor={request.user.username} | "
+                            f"alvo={alvo.username} | "
+                            f"alvo_id={alvo.pk} | "
+                            f"motivo=aluno_sem_matricula"
+                        )
+
+                        messages.error(
+                            request,
+                            f"Não é possível ativar a conta de '{alvo.username}': "
+                            f"o aluno não possui nenhuma matrícula activa. "
+                            f"Cria uma matrícula primeiro."
+                        )
+                        return redirect('gestao_lista')
+
             alvo.is_active = not alvo.is_active
             alvo.save(update_fields=['is_active'])
-            estado = "activada" if alvo.is_active else "desactivada"
+
+            estado = "ativada" if alvo.is_active else "desativada"
+
             _audit(
                 request.user.username,
                 'TOGGLE_CONTA',
@@ -768,10 +814,20 @@ def gestao_utilizador_toggle(request, pk, alvo=None):
                 resultado='OK',
                 detalhe=estado
             )
+
+            contas_logger.info(
+                f"[{'ATIVAR' if alvo.is_active else 'DESATIVAR'}] "
+                f"actor={request.user.username} | "
+                f"alvo={alvo.username} | "
+                f"alvo_id={alvo.pk} | "
+                f"estado={estado}"
+            )
+
         messages.success(
             request,
             f"Conta de '{alvo.username}' {estado}."
         )
+
     except Exception as e:
         logger.error(
             f"Erro ao toggle pk={pk} | "

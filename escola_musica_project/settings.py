@@ -158,6 +158,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'detalhadо',
         },
+        'contas': {
+            'level':     'INFO',
+            'class':     'logging.FileHandler',
+            'filename':  BASE_DIR / 'logs' / 'contas.log',
+            'formatter': 'detalhadо',
+        },
     },
     'loggers': {
         'escola_musica': {
@@ -168,6 +174,11 @@ LOGGING = {
         'django.db.backends': {
             'handlers': ['ficheiro_erros'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'contas_log': {
+            'handlers':  ['contas', 'consola'],
+            'level':     'INFO',
             'propagate': False,
         },
     },

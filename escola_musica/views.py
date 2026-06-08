@@ -944,10 +944,13 @@ def matricula_editar(request, pk):
 def matricula_eliminar(request, pk):
     """
     Apenas superutilizadores podem eliminar matrículas.
-    GET  → página de confirmação com dados da matrícula
-    POST → elimina matrícula e pagamento associado
+    GET  → página de confirmação
+    POST → elimina matrícula e pagamento associado.
+           Se for a última matrícula do aluno,
+           desativa automaticamente a conta.
     """
-    # Verificação de permissão — camada da view
+    contas_logger = logging.getLogger('contas_log')
+
     if not request.user.is_superuser:
         messages.error(
             request,
@@ -958,29 +961,76 @@ def matricula_eliminar(request, pk):
 
     matricula = get_object_or_404(
         Matricula.objects.select_related(
-            'id_aluno', 'id_curso', 'id_turma', 'id_pagamento'
+            'id_aluno',
+            'id_curso',
+            'id_turma',
+            'id_pagamento',
+            'id_aluno__user',
         ),
         pk=pk
     )
 
     if request.method == 'POST':
         try:
-            pagamento    = matricula.id_pagamento
-            id_matricula = matricula.id_matricula
-            nome_aluno   = matricula.id_aluno.nome
+            with transaction.atomic():
+                pagamento = matricula.id_pagamento
+                id_matricula = matricula.id_matricula
+                aluno = matricula.id_aluno
+                nome_aluno = aluno.nome if aluno else '—'
 
-            # Elimina a matrícula primeiro (tem FK para pagamento)
-            matricula.delete()
+                matricula.delete()
 
-            # Elimina o pagamento que ficou órfão
-            if pagamento:
-                pagamento.delete()
+                if pagamento:
+                    pagamento_em_uso = Matricula.objects.filter(
+                        id_pagamento=pagamento
+                    ).exists()
 
-            messages.success(
-                request,
-                f"Matrícula #{id_matricula} do aluno '{nome_aluno}' "
-                "eliminada com sucesso."
-            )
+                    if not pagamento_em_uso:
+                        pagamento.delete()
+
+                conta_desativada = False
+
+                if aluno:
+                    matriculas_restantes = Matricula.objects.filter(
+                        id_aluno=aluno
+                    ).count()
+
+                    user_aluno = getattr(aluno, 'user', None)
+
+                    if (
+                        matriculas_restantes == 0
+                        and user_aluno
+                        and user_aluno.is_active
+                        and not user_aluno.is_staff
+                        and not user_aluno.is_superuser
+                    ):
+                        user_aluno.is_active = False
+                        user_aluno.save(update_fields=['is_active'])
+
+                        conta_desativada = True
+
+                        contas_logger.info(
+                            f"[DESATIVAR] "
+                            f"actor={request.user.username} | "
+                            f"alvo={user_aluno.username} | "
+                            f"motivo=ultima_matricula_eliminada | "
+                            f"matricula_id={id_matricula} | "
+                            f"aluno={nome_aluno}"
+                        )
+
+            if conta_desativada:
+                messages.warning(
+                    request,
+                    f"Matrícula #{id_matricula} eliminada. "
+                    f"Era a última matrícula de '{nome_aluno}' "
+                    f"— a conta de acesso foi desativada automaticamente."
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Matrícula #{id_matricula} do aluno "
+                    f"'{nome_aluno}' eliminada com sucesso."
+                )
 
         except Exception as e:
             logger.error(
@@ -995,7 +1045,6 @@ def matricula_eliminar(request, pk):
 
         return redirect('matriculas_lista')
 
-    # GET → página de confirmação
     return render(request, 'escola_musica/matricula_eliminar.html', {
         'matricula': matricula,
     })
