@@ -6,7 +6,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.db import IntegrityError, DatabaseError
+from django.db import IntegrityError, DatabaseError, transaction
 
 from django.db.models import Count, Q, Avg
 from django.db.models.functions import TruncMonth
@@ -523,155 +523,175 @@ def matriculas_lista(request):
 @login_required
 def matricula_nova(request):
     """
-    GET  → formulário com 3 secções:
-           dados do aluno + dados da matrícula + dados do pagamento
+    GET -> formulário com dados do aluno, matrícula e pagamento.
 
-    POST → valida os formulários, procura ou cria o aluno,
-           guarda os dados em session e redireciona
-           para confirmação na modal.
+    POST -> valida os formulários, valida regras cruzadas, procura/cria
+    o aluno de forma segura, guarda os dados em session e redireciona.
 
-           A BD NÃO é tocada ainda
-           (excepto eventual criação de Aluno).
+    Regra de duplicado:
+    o mesmo aluno não pode ter duas matrículas no mesmo curso.
     """
 
-    # Formulário de dados do aluno
     form_aluno = AlunoForm(request.POST or None)
-
-    # Formulário de dados da matrícula
     form_matricula = MatriculaForm(request.POST or None)
-
-    # Formulário de pagamento
-    # Recebe o utilizador autenticado para controlo interno
     form_pagamento = PagamentoForm(
         request.POST or None,
-        utilizador=request.user
+        utilizador=request.user,
     )
 
-    if request.method == 'POST':
-
-        # Validação independente dos 3 formulários
+    if request.method == "POST":
         aluno_valido = form_aluno.is_valid()
-        mat_valida = form_matricula.is_valid()
-        pag_valido = form_pagamento.is_valid()
+        matricula_valida = form_matricula.is_valid()
+        pagamento_valido = form_pagamento.is_valid()
 
-        # Só continua se TODOS os formulários forem válidos
-        if aluno_valido and mat_valida and pag_valido:
-
-            # Dados já limpos e sanitizados pelos forms
+        if aluno_valido and matricula_valida and pagamento_valido:
             cd_a = form_aluno.cleaned_data
             cd_m = form_matricula.cleaned_data
             cd_p = form_pagamento.cleaned_data
 
-            nome = cd_a['nome']
-            curso = cd_m['id_curso']
-            turma = cd_m['id_turma']
+            nome = cd_a["nome"].strip()
+            email = (
+                cd_a.get("email", "").strip().lower()
+                if cd_a.get("email")
+                else None
+            )
+            curso = cd_m["id_curso"]
+            turma = cd_m["id_turma"]
 
-            # ── Procura ou cria o aluno ───────────────────────────────
-            # Usa iexact para comparação case-insensitive
-            # get_or_create com ORM — nunca SQL manual (S3)
-            try:
-                aluno, criado = Aluno.objects.get_or_create(
-                    nome__iexact=nome,
-                    defaults={
-                        'nome': nome,
-                        'email': cd_a.get('email'),
-                        'telefone': cd_a.get('telefone'),
-                        'data_nascimento': cd_a.get('data_nascimento'),
-                    }
+            data_matricula = cd_m.get("data_matricula")
+            data_pagamento = cd_p.get("data_pagamento")
+
+            if data_matricula and data_pagamento and data_pagamento < data_matricula:
+                form_pagamento.add_error(
+                    "data_pagamento",
+                    (
+                        f"A data de pagamento ({data_pagamento.strftime('%d/%m/%Y')}) "
+                        f"não pode ser anterior à data de matrícula "
+                        f"({data_matricula.strftime('%d/%m/%Y')})."
+                    ),
                 )
-
-                # Associa User ao aluno automaticamente
-                # (cria User se não existir, usando o email do aluno)
-                if aluno.email:
-                    associar_user_aluno(aluno)
-
-                
-
-            except Aluno.MultipleObjectsReturned:
-                # Se existir mais do que um aluno com o mesmo nome,
-                # usa o primeiro por ordem de ID
-                aluno = Aluno.objects.filter(
-                    nome__iexact=nome
-                ).order_by('id_aluno').first()
-
+            else:
+                aluno = None
                 criado = False
 
-            # ── Verificar duplicado de matrícula ─────────────────────
-            # Impede que o mesmo aluno seja matriculado
-            # no mesmo curso e turma
-            duplicado = Matricula.objects.filter(
-                id_aluno=aluno,
-                id_curso=curso,
-                id_turma=turma,
-            ).exists()
+                if email:
+                    aluno = Aluno.objects.filter(email__iexact=email).first()
 
-            if duplicado:
-                form_matricula.add_error(
-                    None,
-                    f"O aluno '{aluno.nome}' já está matriculado "
-                    f"no curso '{curso.nome}' / turma '{turma.nome_turma}'."
-                )
+                if aluno:
+                    duplicado_curso = Matricula.objects.filter(
+                        id_aluno=aluno,
+                        id_curso=curso,
+                    ).exists()
 
-            else:
-                # ── Validação cruzada: data de pagamento >= data de matrícula ──
-                data_matricula  = cd_m.get('data_matricula')
-                data_pagamento  = cd_p.get('data_pagamento')
-
-                if data_matricula and data_pagamento:
-                    if data_pagamento < data_matricula:
-                        form_pagamento.add_error(
-                            'data_pagamento',
-                            f"A data de pagamento ({data_pagamento.strftime('%d/%m/%Y')}) "
-                            f"não pode ser anterior à data de matrícula "
-                            f"({data_matricula.strftime('%d/%m/%Y')})."
+                    if duplicado_curso:
+                        form_matricula.add_error(
+                            None,
+                            (
+                                f"O aluno '{aluno.nome}' já está matriculado "
+                                f"no curso '{curso.nome}'. "
+                                "Não é possível criar uma segunda matrícula "
+                                "no mesmo curso."
+                            ),
                         )
-                        # Não avança — volta ao formulário com o erro
-
                     else:
-                        # Tudo válido — guarda em session
-                        request.session['matricula_pendente'] = {
-                            'aluno_id':         aluno.pk,
-                            'aluno_nome':       aluno.nome,
-                            'aluno_criado':     criado,
-                            'aluno_email':      cd_a.get('email') or '—',
-                            'aluno_telefone':   cd_a.get('telefone') or '—',
-                            'aluno_nascimento': (
-                                cd_a['data_nascimento'].strftime('%d/%m/%Y')
-                                if cd_a.get('data_nascimento') else '—'
+                        with transaction.atomic():
+                            if not aluno.email and email:
+                                aluno.email = email
+
+                            aluno.nome = aluno.nome or nome
+
+                            if not aluno.telefone and cd_a.get("telefone"):
+                                aluno.telefone = cd_a.get("telefone")
+
+                            if not aluno.data_nascimento and cd_a.get("data_nascimento"):
+                                aluno.data_nascimento = cd_a.get("data_nascimento")
+
+                            aluno.save()
+
+                            if aluno.email:
+                                associar_user_aluno(aluno)
+
+                            request.session["matricula_pendente"] = {
+                                "aluno_id": aluno.pk,
+                                "aluno_nome": aluno.nome,
+                                "aluno_criado": criado,
+                                "aluno_email": aluno.email or "—",
+                                "aluno_telefone": aluno.telefone or "—",
+                                "aluno_nascimento": (
+                                    aluno.data_nascimento.strftime("%d/%m/%Y")
+                                    if aluno.data_nascimento else "—"
+                                ),
+                                "curso_id": curso.pk,
+                                "curso_nome": curso.nome,
+                                "turma_id": turma.pk,
+                                "turma_nome": turma.nome_turma,
+                                "data_matricula": (
+                                    data_matricula.isoformat()
+                                    if data_matricula else None
+                                ),
+                                "ano_letivo": cd_m["ano_letivo"],
+                                "data_pagamento": (
+                                    data_pagamento.isoformat()
+                                    if data_pagamento else None
+                                ),
+                                "valor_pago": str(cd_p["valor_pago"]),
+                                "status": cd_p["status"],
+                            }
+
+                        return redirect("matriculas_lista")
+
+                else:
+                    with transaction.atomic():
+                        aluno = Aluno.objects.create(
+                            nome=nome,
+                            email=email,
+                            telefone=cd_a.get("telefone"),
+                            data_nascimento=cd_a.get("data_nascimento"),
+                        )
+                        criado = True
+
+                        if aluno.email:
+                            associar_user_aluno(aluno)
+
+                        request.session["matricula_pendente"] = {
+                            "aluno_id": aluno.pk,
+                            "aluno_nome": aluno.nome,
+                            "aluno_criado": criado,
+                            "aluno_email": aluno.email or "—",
+                            "aluno_telefone": aluno.telefone or "—",
+                            "aluno_nascimento": (
+                                aluno.data_nascimento.strftime("%d/%m/%Y")
+                                if aluno.data_nascimento else "—"
                             ),
-                            'curso_id':         curso.pk,
-                            'curso_nome':       curso.nome,
-                            'turma_id':         turma.pk,
-                            'turma_nome':       turma.nome_turma,
-                            'data_matricula':   (
-                                cd_m['data_matricula'].isoformat()
-                                if cd_m.get('data_matricula') else None
+                            "curso_id": curso.pk,
+                            "curso_nome": curso.nome,
+                            "turma_id": turma.pk,
+                            "turma_nome": turma.nome_turma,
+                            "data_matricula": (
+                                data_matricula.isoformat()
+                                if data_matricula else None
                             ),
-                            'ano_letivo':       cd_m['ano_letivo'],
-                            'data_pagamento':   (
-                                cd_p['data_pagamento'].isoformat()
-                                if cd_p.get('data_pagamento') else None
+                            "ano_letivo": cd_m["ano_letivo"],
+                            "data_pagamento": (
+                                data_pagamento.isoformat()
+                                if data_pagamento else None
                             ),
-                            'valor_pago':       str(cd_p['valor_pago']),
-                            'status':           cd_p['status'],
+                            "valor_pago": str(cd_p["valor_pago"]),
+                            "status": cd_p["status"],
                         }
-                        return redirect('matriculas_lista')
 
-        else:
-            # Mensagem genérica caso existam erros de validação
-            messages.warning(
-                request,
-                "Corrige os erros assinalados antes de submeter."
-            )
+                    return redirect("matriculas_lista")
 
-    # Renderiza a página com os formulários
-    # (vazios no GET ou preenchidos no POST com erros)
-    # No return render do final da view, substitui por:
-    return render(request, 'escola_musica/matricula_nova.html', {
-        'form_aluno':     form_aluno,
-        'form_matricula': form_matricula,
-        'form_pagamento': form_pagamento,
-        'turmas_json':    Turma.objects.select_related('id_curso').order_by('nome_turma'),
+        messages.warning(
+            request,
+            "Corrige os erros assinalados antes de submeter.",
+        )
+
+    return render(request, "escola_musica/matricula_nova.html", {
+        "form_aluno": form_aluno,
+        "form_matricula": form_matricula,
+        "form_pagamento": form_pagamento,
+        "turmas_json": Turma.objects.select_related("id_curso").order_by("nome_turma"),
     })
 
 @login_required
