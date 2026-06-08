@@ -1,25 +1,419 @@
 {% extends 'escola_musica/base.html' %}
 {% load static %}
 
-{% block titulo %}Dashboard — Professor{% endblock %}
+{% block titulo %}Dashboard — {{ professor.nome }}{% endblock %}
 
 {% block css_extra %}
-  <link rel="stylesheet" href="{% static 'escola_musica/css/matriculas.css' %}">
+  <link rel="stylesheet" href="{% static 'escola_musica/css/professor_dashboard.css' %}">
 {% endblock %}
 
 {% block conteudo %}
-<div class="pagina-cabecalho">
-  <div>
-    <h1 class="pagina-titulo">Bem-vindo, {{ professor.nome }}</h1>
-    <p class="pagina-subtitulo">Área reservada ao professor</p>
-  </div>
-</div>
 
-<div class="estado-vazio">
-  <div class="estado-vazio__icone">🎻</div>
-  <p class="estado-vazio__texto">
-    O teu dashboard está em construção.<br>
-    Em breve poderás consultar as tuas turmas e aulas aqui.
-  </p>
-</div>
+<!-- ══ CABEÇALHO ══ -->
+<header class="prof-header" aria-label="Cabeçalho do dashboard">
+  <div class="prof-header__info">
+    <p class="prof-header__pre">Área do Professor</p>
+    <h1 class="prof-header__nome">{{ professor.nome }}</h1>
+    <p class="prof-header__sub">
+      {{ turmas_com_alunos|length }}
+      turma{{ turmas_com_alunos|length|pluralize:",s" }} atribuída{{ turmas_com_alunos|length|pluralize:",s" }}
+    </p>
+  </div>
+</header>
+
+
+<!-- ══ KPI CARDS ══ -->
+<section class="prof-kpis" aria-label="Indicadores do professor">
+
+  <!-- KPI: Alunos ativos -->
+  <article class="kpi-card kpi-card--alunos"
+           aria-labelledby="kpi-alunos-label">
+    <div class="kpi-card__icone" aria-hidden="true">👥</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor"
+            id="kpi-alunos-valor"
+            aria-labelledby="kpi-alunos-label">
+        {{ total_alunos_ativos }}
+      </span>
+      <span class="kpi-card__label" id="kpi-alunos-label">
+        Alunos ativos
+      </span>
+    </div>
+  </article>
+
+  <!-- KPI: Aulas este mês -->
+  <article class="kpi-card kpi-card--aulas"
+           aria-labelledby="kpi-aulas-label">
+    <div class="kpi-card__icone" aria-hidden="true">📅</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor"
+            id="kpi-aulas-valor"
+            aria-labelledby="kpi-aulas-label">
+        {{ aulas_mes }}
+      </span>
+      <span class="kpi-card__label" id="kpi-aulas-label">
+        Aulas este mês
+      </span>
+    </div>
+  </article>
+
+  <!-- KPI: Taxa de assiduidade -->
+  <article class="kpi-card kpi-card--assiduidade"
+           aria-labelledby="kpi-assid-label">
+    <div class="kpi-card__icone" aria-hidden="true">◎</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor"
+            id="kpi-assid-valor"
+            aria-labelledby="kpi-assid-label">
+        {{ taxa_assiduidade }}<span class="kpi-card__unidade">%</span>
+      </span>
+      <span class="kpi-card__label" id="kpi-assid-label">
+        Taxa de assiduidade
+      </span>
+    </div>
+    <!-- Anel animado pelo JS -->
+    <div class="kpi-card__anel" aria-hidden="true">
+      <svg viewBox="0 0 36 36" class="kpi-anel-svg"
+           aria-hidden="true">
+        <circle class="kpi-anel-fundo" cx="18" cy="18" r="15.9"/>
+        <circle class="kpi-anel-prog"  cx="18" cy="18" r="15.9"
+                data-percentagem="{{ taxa_assiduidade }}"/>
+      </svg>
+    </div>
+    <!-- Barra de progresso — largura aplicada pelo JS via data-valor -->
+    <div class="kpi-card__barra-wrapper" aria-hidden="true">
+      <div class="kpi-card__barra kpi-card__barra--assid"
+           data-valor="{{ taxa_assiduidade }}">
+      </div>
+    </div>
+  </article>
+
+  <!-- KPI: Turmas -->
+  <article class="kpi-card kpi-card--turmas"
+           aria-labelledby="kpi-turmas-label">
+    <div class="kpi-card__icone" aria-hidden="true">🎓</div>
+    <div class="kpi-card__corpo">
+      <span class="kpi-card__valor"
+            id="kpi-turmas-valor"
+            aria-labelledby="kpi-turmas-label">
+        {{ turmas_com_alunos|length }}
+      </span>
+      <span class="kpi-card__label" id="kpi-turmas-label">
+        Turmas ativas
+      </span>
+    </div>
+  </article>
+
+</section>
+
+
+<!-- ══ LAYOUT PRINCIPAL ══ -->
+<div class="prof-grid" role="main">
+
+  <!-- ════ COLUNA PRINCIPAL ════ -->
+  <div class="prof-col prof-col--principal">
+
+    <!-- PRÓXIMAS AULAS -->
+    <section class="prof-secao" aria-labelledby="titulo-proximas">
+      <h2 class="prof-secao__titulo" id="titulo-proximas">
+        <span class="prof-secao__icone" aria-hidden="true">→</span>
+        Próximas Aulas
+      </h2>
+
+      {% if proximas_aulas %}
+        <div class="agenda-lista" role="list">
+          {% for ada in proximas_aulas %}
+          <article class="agenda-item" role="listitem"
+                   aria-labelledby="agenda-{{ forloop.counter }}-titulo">
+            <!-- Bloco de data -->
+            <div class="agenda-item__data" aria-hidden="true">
+              <span class="agenda-item__dia">
+                {{ ada.data_inicio|date:"d" }}
+              </span>
+              <span class="agenda-item__mes">
+                {{ ada.data_inicio|date:"M" }}
+              </span>
+            </div>
+
+            <!-- Detalhes -->
+            <div class="agenda-item__detalhe">
+              <h3 class="agenda-item__curso"
+                  id="agenda-{{ forloop.counter }}-titulo">
+                {% if ada.id_aula and ada.id_aula.id_curso %}
+                  {{ ada.id_aula.id_curso.nome|default:"Curso" }}
+                {% else %}
+                  Aula
+                {% endif %}
+              </h3>
+              <p class="agenda-item__meta">
+                {% if ada.id_aula and ada.id_aula.id_turma %}
+                  <span>{{ ada.id_aula.id_turma.nome_turma|default:"—" }}</span>
+                {% endif %}
+                {% if ada.id_aula and ada.id_aula.id_sala %}
+                  <span class="agenda-item__sep" aria-hidden="true">·</span>
+                  <span>Sala: {{ ada.id_aula.id_sala.nome|default:"—" }}</span>
+                {% endif %}
+                {% if ada.id_aula and ada.id_aula.id_tipoaula %}
+                  <span class="agenda-item__sep" aria-hidden="true">·</span>
+                  <span>{{ ada.id_aula.id_tipoaula.nome|default:"—" }}</span>
+                {% endif %}
+              </p>
+              <p class="agenda-item__hora">
+                {{ ada.data_inicio|time:"H:i" }}
+                {% if ada.data_final %}
+                  — {{ ada.data_final|time:"H:i" }}
+                {% endif %}
+              </p>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="prof-vazio" role="status">
+          <span class="prof-vazio__icone" aria-hidden="true">📅</span>
+          <p class="prof-vazio__texto">Sem aulas agendadas.</p>
+        </div>
+      {% endif %}
+    </section>
+
+
+    <!-- TURMAS E ALUNOS -->
+    <section class="prof-secao" aria-labelledby="titulo-turmas">
+      <h2 class="prof-secao__titulo" id="titulo-turmas">
+        <span class="prof-secao__icone" aria-hidden="true">🎓</span>
+        Turmas e Alunos
+      </h2>
+
+      {% if turmas_com_alunos %}
+        <div class="turmas-acordeao" role="list">
+          {% for item in turmas_com_alunos %}
+          <div class="turma-bloco" role="listitem">
+
+            <!-- Cabeçalho clicável da turma -->
+            <button class="turma-bloco__header"
+                    aria-expanded="false"
+                    aria-controls="turma-alunos-{{ forloop.counter }}"
+                    data-turma="{{ forloop.counter }}">
+              <div class="turma-bloco__info">
+                <span class="turma-bloco__nome">
+                  {{ item.turma.nome_turma|default:"Turma" }}
+                </span>
+                {% if item.turma.id_curso %}
+                  <span class="turma-bloco__curso">
+                    {{ item.turma.id_curso.nome|default:"" }}
+                  </span>
+                {% endif %}
+              </div>
+              <div class="turma-bloco__meta">
+                <span class="turma-bloco__count"
+                      aria-label="{{ item.total_alunos }} alunos">
+                  {{ item.total_alunos }}
+                  aluno{{ item.total_alunos|pluralize:",s" }}
+                </span>
+                {% if item.assiduidade is not None %}
+                  <span class="turma-bloco__assid
+                    {% if item.assiduidade >= 75 %}assid--boa
+                    {% elif item.assiduidade >= 50 %}assid--media
+                    {% else %}assid--baixa{% endif %}"
+                    aria-label="Assiduidade: {{ item.assiduidade }}%">
+                    {{ item.assiduidade }}%
+                  </span>
+                {% endif %}
+                <span class="turma-bloco__seta" aria-hidden="true">›</span>
+              </div>
+            </button>
+
+            <!-- Lista de alunos — expandível -->
+            <div class="turma-bloco__alunos"
+                 id="turma-alunos-{{ forloop.counter }}"
+                 aria-hidden="true"
+                 role="region">
+              {% if item.alunos %}
+                <ul class="alunos-lista" role="list">
+                  {% for aluno in item.alunos %}
+                  <li class="alunos-lista__item" role="listitem">
+                    <span class="alunos-lista__avatar" aria-hidden="true">
+                      {{ aluno.id_aluno__nome|first|upper }}
+                    </span>
+                    <span class="alunos-lista__nome">
+                      {{ aluno.id_aluno__nome|default:"Aluno" }}
+                    </span>
+                  </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="turma-bloco__sem-alunos">
+                  Sem alunos matriculados nesta turma.
+                </p>
+              {% endif %}
+            </div>
+
+          </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="prof-vazio" role="status">
+          <span class="prof-vazio__icone" aria-hidden="true">🎓</span>
+          <p class="prof-vazio__texto">Sem turmas atribuídas.</p>
+        </div>
+      {% endif %}
+    </section>
+
+
+    <!-- LIVRO DE SUMÁRIOS -->
+    <section class="prof-secao" aria-labelledby="titulo-sumarios">
+      <h2 class="prof-secao__titulo" id="titulo-sumarios">
+        <span class="prof-secao__icone" aria-hidden="true">📖</span>
+        Livro de Sumários
+      </h2>
+
+      {% if sumarios %}
+        <div class="sumarios-lista" role="list">
+          {% for aula in sumarios %}
+          <article class="sumario-item" role="listitem"
+                   aria-labelledby="sumario-{{ aula.id_aula }}-titulo">
+            <div class="sumario-item__header">
+              <h3 class="sumario-item__titulo"
+                  id="sumario-{{ aula.id_aula }}-titulo">
+                {% if aula.id_curso %}
+                  {{ aula.id_curso.nome|default:"Aula" }}
+                {% else %}
+                  Aula {{ aula.id_aula }}
+                {% endif %}
+              </h3>
+              {% if aula.id_turma %}
+                <span class="sumario-item__turma">
+                  {{ aula.id_turma.nome_turma|default:"" }}
+                </span>
+              {% endif %}
+            </div>
+            <!-- conteudo é TextField simples — sem rich text
+                 Renderizado com linebreaksbr para preservar parágrafos
+                 auto-escape activo — protegido contra XSS -->
+            <p class="sumario-item__conteudo">
+              {{ aula.conteudo|linebreaksbr }}
+            </p>
+          </article>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="prof-vazio" role="status">
+          <span class="prof-vazio__icone" aria-hidden="true">📖</span>
+          <p class="prof-vazio__texto">
+            Ainda não existem sumários registados.
+          </p>
+        </div>
+      {% endif %}
+    </section>
+
+  </div><!-- /prof-col--principal -->
+
+
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="prof-col prof-col--sidebar"
+         aria-label="Gráficos e estatísticas">
+
+    <!-- GRÁFICO: Alunos por turma (barras) -->
+    <section class="prof-secao" aria-labelledby="titulo-grafico-barras">
+      <h2 class="prof-secao__titulo" id="titulo-grafico-barras">
+        <span class="prof-secao__icone" aria-hidden="true">📊</span>
+        Alunos por Turma
+      </h2>
+
+      {% if grafico_barras %}
+        <div class="grafico-wrapper">
+          <canvas id="grafico-barras"
+                  role="img"
+                  aria-label="Gráfico de barras: alunos por turma">
+          </canvas>
+        </div>
+      {% else %}
+        <div class="prof-vazio" role="status">
+          <p class="prof-vazio__texto">Sem dados suficientes.</p>
+        </div>
+      {% endif %}
+    </section>
+
+
+    <!-- GRÁFICO: Evolução de aulas (linha) -->
+    <section class="prof-secao" aria-labelledby="titulo-grafico-linha">
+      <h2 class="prof-secao__titulo" id="titulo-grafico-linha">
+        <span class="prof-secao__icone" aria-hidden="true">📈</span>
+        Aulas por Mês
+        <span class="prof-secao__sub">Ano letivo 2025/2026</span>
+      </h2>
+
+      {% if grafico_linha %}
+        <div class="grafico-wrapper">
+          <canvas id="grafico-linha"
+                  role="img"
+                  aria-label="Gráfico de linha: evolução de aulas por mês">
+          </canvas>
+        </div>
+      {% else %}
+        <div class="prof-vazio" role="status">
+          <p class="prof-vazio__texto">Sem dados no ano letivo actual.</p>
+        </div>
+      {% endif %}
+    </section>
+
+
+    <!-- RESUMO DE ASSIDUIDADE POR TURMA -->
+    {% if turmas_com_alunos %}
+    <section class="prof-secao" aria-labelledby="titulo-assid-turmas">
+      <h2 class="prof-secao__titulo" id="titulo-assid-turmas">
+        <span class="prof-secao__icone" aria-hidden="true">◎</span>
+        Assiduidade por Turma
+      </h2>
+
+      <div class="assid-lista" role="list">
+        {% for item in turmas_com_alunos %}
+        <div class="assid-item" role="listitem">
+          <div class="assid-item__header">
+            <span class="assid-item__nome">
+              {{ item.turma.nome_turma|default:"Turma" }}
+            </span>
+            <span class="assid-item__valor">
+              {% if item.assiduidade is not None %}
+                {{ item.assiduidade }}%
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+          <div class="assid-item__barra-wrapper" aria-hidden="true">
+            <div class="assid-item__barra
+              {% if item.assiduidade >= 75 %}assid-barra--boa
+              {% elif item.assiduidade >= 50 %}assid-barra--media
+              {% else %}assid-barra--baixa{% endif %}"
+              data-valor="{{ item.assiduidade|default:0 }}">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+  </aside><!-- /prof-col--sidebar -->
+
+</div><!-- /prof-grid -->
+
+
+<!-- Dados dos gráficos — json_script serializa com segurança -->
+{{ grafico_barras|json_script:"dados-grafico-barras" }}
+{{ grafico_linha|json_script:"dados-grafico-linha"   }}
+
+{% endblock %}
+
+{% block js_extra %}
+  <!-- Chart.js via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+          integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3oD+sCoJrzXJ+yKiuj093EwBd6cpNcEeYBNE1VPPBRSPf0PQ71gNLg=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
+  <script src="{% static 'escola_musica/js/professor_dashboard.js' %}"></script>
 {% endblock %}

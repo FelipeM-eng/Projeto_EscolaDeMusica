@@ -8,7 +8,13 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db import IntegrityError, DatabaseError
 
+from django.db.models import Count, Q, Avg
+from django.db.models.functions import TruncMonth
+import json
+
 from django.utils import timezone
+
+from datetime import datetime, time
 
 from .models import (
     Aluno, Professor, Matricula, Pagamento,
@@ -277,14 +283,221 @@ def aluno_dashboard(request):
 
 @login_required
 def professor_dashboard(request):
-    """Dashboard placeholder para professores."""
+    """
+    Dashboard do professor.
+    Segurança: todos os dados filtrados por request.user.professor.
+    Nunca expõe dados de outro professor.
+    Nunca expõe dados pessoais sensíveis dos alunos (só nome e presença).
+    """
+
+    # ── Protecção de acesso ───────────────────────────────────
     if not hasattr(request.user, 'professor'):
         messages.error(request, "Acesso restrito a professores.")
         return redirect('login_professor')
 
     professor = request.user.professor
+    agora     = timezone.now()
+    hoje      = agora.date()
+
+    # ── Aulas deste professor ─────────────────────────────────
+    # Base queryset — todas as aulas deste professor
+    # Filtra estritamente por id_professor — sem acesso cruzado
+    aulas_professor = (
+        Aula.objects
+        .filter(id_professor=professor)
+        .select_related(
+            'id_turma',
+            'id_curso',
+            'id_sala',
+            'id_tipoaula',
+        )
+    )
+
+    ids_aulas = aulas_professor.values_list('id_aula', flat=True)
+
+    # ── KPI 1: Total de alunos ativos ────────────────────────
+    # Alunos matriculados nas turmas deste professor
+    # Via Matricula → Turma → Aula (do professor)
+    ids_turmas = aulas_professor.values_list(
+        'id_turma', flat=True
+    ).distinct()
+
+    total_alunos_ativos = (
+        Matricula.objects
+        .filter(id_turma__in=ids_turmas)
+        .values('id_aluno')
+        .distinct()
+        .count()
+    )
+
+    # ── KPI 2: Aulas dadas este mês ──────────────────────────
+    # Conta registos em AulaDoAluno com data_inicio no mês actual
+    # para as aulas deste professor
+    mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    aulas_mes = (
+        AulaDoAluno.objects
+        .filter(
+            id_aula__in=ids_aulas,
+            data_inicio__gte=mes_inicio,
+            data_inicio__lte=agora,
+        )
+        .values('id_aula')
+        .distinct()
+        .count()
+    )
+
+    # ── KPI 3: Taxa de assiduidade ───────────────────────────
+    # Percentagem de presenças nas aulas deste professor
+    registos_presenca = AulaDoAluno.objects.filter(
+        id_aula__in=ids_aulas,
+        presenca__isnull=False,
+    )
+    total_registos  = registos_presenca.count()
+    total_presencas = registos_presenca.filter(presenca=True).count()
+    taxa_assiduidade = (
+        round(total_presencas / total_registos * 100)
+        if total_registos > 0 else 0
+    )
+
+    # ── Próximas aulas ────────────────────────────────────────
+    proximas_qs = (
+        AulaDoAluno.objects
+        .filter(
+            id_aula__in=ids_aulas,
+            data_inicio__gt=agora,
+        )
+        .select_related(
+            'id_aula',
+            'id_aula__id_turma',
+            'id_aula__id_curso',
+            'id_aula__id_sala',
+            'id_aula__id_tipoaula',
+        )
+        .order_by('data_inicio')
+    )
+
+    proximas_aulas = []
+    aulas_vistas = set()
+
+    for aula_aluno in proximas_qs:
+        chave = (aula_aluno.id_aula_id, aula_aluno.data_inicio)
+
+        if chave in aulas_vistas:
+            continue
+
+        aulas_vistas.add(chave)
+        proximas_aulas.append(aula_aluno)
+
+        if len(proximas_aulas) == 5:
+            break
+
+    # ── Turmas com alunos ─────────────────────────────────────
+    turmas_com_alunos = []
+    for id_turma in ids_turmas:
+        try:
+            from .models import Turma
+            turma = Turma.objects.select_related('id_curso').get(
+                pk=id_turma
+            )
+            alunos = (
+                Matricula.objects
+                .filter(id_turma=turma)
+                .select_related('id_aluno')
+                # Só expõe nome — sem dados pessoais sensíveis
+                .values(
+                    'id_aluno__id_aluno',
+                    'id_aluno__nome',
+                )
+            )
+            # Assiduidade por turma
+            aulas_turma = aulas_professor.filter(
+                id_turma=turma
+            ).values_list('id_aula', flat=True)
+
+            reg_turma    = AulaDoAluno.objects.filter(
+                id_aula__in=aulas_turma,
+                presenca__isnull=False,
+            )
+            pres_turma   = reg_turma.filter(presenca=True).count()
+            total_turma  = reg_turma.count()
+            assiduidade_turma = (
+                round(pres_turma / total_turma * 100)
+                if total_turma > 0 else None
+            )
+
+            turmas_com_alunos.append({
+                'turma':         turma,
+                'alunos':        list(alunos),
+                'total_alunos':  alunos.count(),
+                'assiduidade':   assiduidade_turma,
+            })
+        except Exception:
+            continue
+
+    # ── Sumários (livro de sumários) ──────────────────────────
+    # Últimas 10 aulas com conteudo preenchido
+    sumarios = (
+        aulas_professor
+        .exclude(conteudo=None)
+        .exclude(conteudo='')
+        .order_by('-id_aula')[:10]
+    )
+
+    # ── Dados para gráficos ───────────────────────────────────
+    # Ano letivo: Setembro 2025 – Julho 2026
+    ano_letivo_inicio = timezone.make_aware(
+        datetime.combine(datetime(2025, 9, 1).date(), time.min)
+    )
+
+    ano_letivo_fim = timezone.make_aware(
+        datetime.combine(datetime(2026, 7, 31).date(), time.max)
+    )
+
+    # Aulas dadas por mês (linha)
+    aulas_por_mes = (
+        AulaDoAluno.objects
+        .filter(
+            id_aula__in=ids_aulas,
+            data_inicio__gte=ano_letivo_inicio,
+            data_inicio__lte=ano_letivo_fim,
+            data_inicio__isnull=False,
+        )
+        .annotate(mes=TruncMonth('data_inicio'))
+        .values('mes')
+        .annotate(total=Count('pk'))
+        .order_by('mes')
+    )
+
+    grafico_linha = [
+        {
+            'mes':   item['mes'].strftime('%b %Y') if item['mes'] else '',
+            'total': item['total'],
+        }
+        for item in aulas_por_mes
+    ]
+
+    # Alunos por turma (barras)
+    grafico_barras = [
+        {
+            'turma': t['turma'].nome_turma or 'Turma',
+            'total': t['total_alunos'],
+        }
+        for t in turmas_com_alunos
+    ]
+
     return render(request, 'escola_musica/professor_dashboard.html', {
-        'professor': professor,
+        'professor':           professor,
+        'total_alunos_ativos': total_alunos_ativos,
+        'aulas_mes':           aulas_mes,
+        'taxa_assiduidade':    taxa_assiduidade,
+        'taxa_faltas':         100 - taxa_assiduidade,
+        'proximas_aulas':      proximas_aulas,
+        'turmas_com_alunos':   turmas_com_alunos,
+        'sumarios':            sumarios,
+        # Listas Python — json_script trata a serialização no template
+        'grafico_linha':       grafico_linha,
+        'grafico_barras':      grafico_barras,
     })
 
 # ─────────────────────────────────────────

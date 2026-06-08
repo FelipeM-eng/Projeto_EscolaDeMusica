@@ -5,6 +5,7 @@ Utilitários centralizados da aplicação.
 """
 from django.contrib.auth.models import User
 from decouple import config
+from .models import Aluno as AlunoModel
 
 
 # ─────────────────────────────────────────────────────────────
@@ -90,13 +91,29 @@ def associar_user_aluno(aluno):
     """
     Cria ou obtém User e associa ao aluno.
     Só actua se aluno tiver email.
+    Protecção: nunca reassocia um User já ligado a outro aluno
+    — evita IntegrityError na constraint UNIQUE user_id.
     """
     if not aluno.email:
         return None
 
     user = criar_ou_obter_user(aluno.email, aluno.nome or '')
+    if not user:
+        return None
 
-    if user and aluno.user_id != user.pk:
+    # Verifica se o User já está associado a outro aluno
+    # Se sim, não tenta reassociar — preserva a integridade da BD
+    aluno_existente = (
+        AlunoModel.objects
+        .filter(user=user)
+        .exclude(pk=aluno.pk)
+        .first()
+    )
+    if aluno_existente:
+        # User já pertence a outro aluno — não reassocia
+        return user
+
+    if aluno.user_id != user.pk:
         aluno.user = user
         aluno.save(update_fields=['user_id'])
 
