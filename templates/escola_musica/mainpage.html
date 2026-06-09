@@ -1,130 +1,136 @@
+```django
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Escola de Música</title>
-    <link rel="stylesheet" href="{% static 'escola_musica/css/mainpage.css' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{% static 'escola_musica/css/mainpage.css' %}">
 </head>
-<body>
 
-    {% include 'escola_musica/components/violao_chamas.html' %}
+<body class="mainpage-body">
 
-    <!-- Botão Central -->
-    <div class="branding-container">
-        <button class="branding-button" id="brandingBtn">
-            <span class="btn-text">Escola de Música</span>
-            <span class="btn-icon">↓</span>
-        </button>
+<section id="mainpage-hero"
+         class="hero-scene"
+         aria-label="Acessos rápidos">
+
+    <div class="hero-scene__ambiente"
+         id="hero-ambiente"
+         aria-hidden="true">
+
+        <div class="hero-scene__camada hero-scene__profundidade"></div>
+
+        <div class="hero-scene__camada hero-scene__spot"></div>
+
+        <div class="hero-scene__camada hero-scene__feixes"
+             id="hero-feixes">
+
+            <span class="hero-scene__feixe"></span>
+            <span class="hero-scene__feixe"></span>
+            <span class="hero-scene__feixe"></span>
+
+        </div>
+
+        <div class="hero-scene__camada hero-scene__chao"></div>
+
+        <canvas class="hero-scene__po"
+                id="hero-po"></canvas>
+
+        <div class="hero-scene__camada hero-scene__vinheta"></div>
+
+        <div class="hero-scene__camada hero-scene__grain"></div>
     </div>
 
-    <!-- Modal de Login -->
-    <div class="login-modal" id="loginModal">
-        <div class="login-modal__title">Acessos Rápidos</div>
-        <a href="{% url 'login_aluno' %}"    class="login-link">Login Aluno</a>
-        <a href="{% url 'login_professor' %}" class="login-link">Login Professor</a>
-        <a href="{% url 'login' %}"           class="login-link">Login Administração</a>
+    <div class="hero-scene__conteudo">
+
+        <header class="hero-scene__cabecalho">
+
+            <h1 class="hero-scene__titulo">
+                Escola de Música
+            </h1>
+
+            <p class="hero-scene__subtitulo">
+                Mural de acessos
+            </p>
+
+        </header>
+
+        <div class="hero-scene__mural"
+             id="hero-mural">
+
+            <div class="hero-scene__mural-aurora"
+                 aria-hidden="true"></div>
+
+            <div class="hero-scene__mural-painel">
+
+                <p class="hero-scene__mural-legenda">
+                    Toca no teu cartaz
+                </p>
+
+                <div class="hero-scene__cartazes">
+
+                    <div class="hero-scene__holder"
+                         data-url="{% url 'login_aluno' %}"
+                         role="link"
+                         tabindex="0"
+                         aria-label="Login Aluno">
+
+                        <span class="hero-scene__alfinete"
+                              aria-hidden="true"></span>
+
+                        <img src="{% static 'escola_musica/images/cartaz aluno.jpg' %}"
+                             alt="Cartaz Login Aluno">
+                    </div>
+
+                    <div class="hero-scene__holder hero-scene__holder--destaque"
+                         data-url="{% url 'login_professor' %}"
+                         role="link"
+                         tabindex="0"
+                         aria-label="Login Professor">
+
+                        <span class="hero-scene__alfinete"
+                              aria-hidden="true"></span>
+
+                        <img src="{% static 'escola_musica/images/cartaz professor.jpg' %}"
+                             alt="Cartaz Login Professor">
+                    </div>
+
+                    <div class="hero-scene__holder"
+                         data-url="{% url 'login' %}"
+                         role="link"
+                         tabindex="0"
+                         aria-label="Login Administração">
+
+                        <span class="hero-scene__alfinete"
+                              aria-hidden="true"></span>
+
+                        <img src="{% static 'escola_musica/images/cartaz administrador.jpg' %}"
+                             alt="Cartaz Login Administração">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- Grid Mosaico — todas as imagens -->
-    <main class="grid-container">
+</section>
 
-        <!-- CURSOS — cards clicáveis com data-url -->
-        <div class="grid-item large" data-url="{% url 'curso_canto' %}">
-            <img src="{% static 'escola_musica/images/fundo_canto.jpg' %}"
-                 alt="Curso de Canto" loading="lazy">
-            <div class="grid-item__info">
-                <div class="grid-item__title">Curso de Canto</div>
-                <div class="grid-item__desc">Explora a tua voz e técnica vocal.</div>
-            </div>
-        </div>
+<script src="{% static 'escola_musica/js/mainpage.js' %}"></script>
 
-        <div class="grid-item wide" data-url="{% url 'curso_bateria' %}">
-            <img src="{% static 'escola_musica/images/fundo_bateria.jpg' %}"
-                 alt="Curso de Bateria" loading="lazy">
-            <div class="grid-item__info">
-                <div class="grid-item__title">Curso de Bateria</div>
-                <div class="grid-item__desc">Ritmo e percussão de alta performance.</div>
-            </div>
-        </div>
-
-        <div class="grid-item" data-url="{% url 'curso_piano' %}">
-            <img src="{% static 'escola_musica/images/fundo_piano.jpg' %}"
-                 alt="Curso de Piano" loading="lazy">
-            <div class="grid-item__info">
-                <div class="grid-item__title">Curso de Piano</div>
-                <div class="grid-item__desc">A elegância das teclas e harmonia.</div>
-            </div>
-        </div>
-
-        <div class="grid-item tall" data-url="{% url 'curso_violao' %}">
-            <img src="{% static 'escola_musica/images/fundo_violao.jpg' %}"
-                 alt="Curso de Violão" loading="lazy">
-            <div class="grid-item__info">
-                <div class="grid-item__title">Curso de Violão</div>
-                <div class="grid-item__desc">Domina as cordas e a melodia.</div>
-            </div>
-        </div>
-
-        <!-- IMAGENS DECORATIVAS — restante portfólio -->
-        <div class="grid-item">
-            <img src="{% static 'escola_musica/images/bateriacomFoco.jpg' %}"
-                 alt="Bateria com foco" loading="lazy">
-        </div>
-
-        <div class="grid-item tall">
-            <img src="{% static 'escola_musica/images/microfone.jpg' %}"
-                 alt="Microfone" loading="lazy">
-        </div>
-
-        <div class="grid-item wide">
-            <img src="{% static 'escola_musica/images/guitarra.jpg' %}"
-                 alt="Guitarra" loading="lazy">
-        </div>
-
-        <div class="grid-item">
-            <img src="{% static 'escola_musica/images/pianoempreto.jpg' %}"
-                 alt="Piano" loading="lazy">
-        </div>
-
-        <div class="grid-item large">
-            <img src="{% static 'escola_musica/images/BateriaPerspectiva.jpg' %}"
-                 alt="Bateria perspectiva" loading="lazy">
-        </div>
-
-        <div class="grid-item">
-            <img src="{% static 'escola_musica/images/BateriaUsada.jpg' %}"
-                 alt="Bateria usada" loading="lazy">
-        </div>
-
-        <div class="grid-item wide">
-            <img src="{% static 'escola_musica/images/StudioMusica.jpg' %}"
-                 alt="Estúdio de música" loading="lazy">
-        </div>
-
-        <div class="grid-item tall">
-            <img src="{% static 'escola_musica/images/CAntorEmPe.jpg' %}"
-                 alt="Cantor em pé" loading="lazy">
-        </div>
-
-        <div class="grid-item">
-            <img src="{% static 'escola_musica/images/FraseMusica.jpg' %}"
-                 alt="Frase musical" loading="lazy">
-        </div>
-
-        <div class="grid-item">
-            <img src="{% static 'escola_musica/images/violao_em_chamas.jpg' %}"
-                 alt="Violão em chamas" loading="lazy">
-        </div>
-
-        <div class="grid-item wide">
-            <img src="{% static 'escola_musica/images/piano Perspectiva.jpg' %}"
-                 alt="Piano perspectiva" loading="lazy">
-        </div>
-
-    </main>
-
-    <script src="{% static 'escola_musica/js/mainpage.js' %}"></script>
 </body>
 </html>
+```

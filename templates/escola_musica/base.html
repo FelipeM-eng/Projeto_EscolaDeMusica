@@ -12,13 +12,13 @@
   <!-- CSS específico da página -->
   {% block css_extra %}{% endblock %}
 </head>
-<body class="pagina-protegida">
+<body class="{% block body_class %}pagina-protegida{% endblock %}">
 
   <nav class="navbar">
     <a href="{% url 'matriculas_lista' %}" class="navbar__logo">
       <span class="navbar__logo-texto">🎵 Escola de Música</span>
       <img
-        src="{% static 'escola_musica/images/project.webp' %}"
+        src="{% static 'escola_musica/images/LogoDouradaSemFundo.webp' %}"
         alt="LF"
         class="navbar__logo-img"
       >
@@ -33,7 +33,7 @@
     </div>
   </nav>
 
-  <main class="conteudo">
+  <main class="{% block main_class %}conteudo{% endblock %}">
     {% if messages %}
       <div class="mensagens">
         {% for msg in messages %}
