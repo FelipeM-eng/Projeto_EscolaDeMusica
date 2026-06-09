@@ -409,10 +409,8 @@
 {% endblock %}
 
 {% block js_extra %}
-  <!-- Chart.js via CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
-          integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3oD+sCoJrzXJ+yKiuj093EwBd6cpNcEeYBNE1VPPBRSPf0PQ71gNLg=="
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer"></script>
+  <!-- Chart.js 4.4.1 — hash corrigido -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+          crossorigin="anonymous"></script>
   <script src="{% static 'escola_musica/js/professor_dashboard.js' %}"></script>
 {% endblock %}

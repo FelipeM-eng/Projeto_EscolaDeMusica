@@ -15,6 +15,7 @@ import json
 from django.utils import timezone
 
 from datetime import datetime, time
+import datetime as dt
 
 from .models import (
     Aluno, Professor, Matricula, Pagamento,
@@ -331,23 +332,25 @@ def professor_dashboard(request):
         .count()
     )
 
-    # ── KPI 2: Aulas dadas este mês ──────────────────────────
-    # Conta registos em AulaDoAluno com data_inicio no mês actual
-    # para as aulas deste professor
+    # ── KPI 2: Aulas este mês ────────────────────────────────
     mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    if mes_inicio.month == 12:
+        proximo_mes = mes_inicio.replace(year=mes_inicio.year + 1, month=1)
+    else:
+        proximo_mes = mes_inicio.replace(month=mes_inicio.month + 1)
 
     aulas_mes = (
         AulaDoAluno.objects
         .filter(
             id_aula__in=ids_aulas,
             data_inicio__gte=mes_inicio,
-            data_inicio__lte=agora,
+            data_inicio__lt=proximo_mes,
         )
-        .values('id_aula')
+        .values('id_aula', 'data_inicio')
         .distinct()
         .count()
     )
-
     # ── KPI 3: Taxa de assiduidade ───────────────────────────
     # Percentagem de presenças nas aulas deste professor
     registos_presenca = AulaDoAluno.objects.filter(
@@ -448,11 +451,10 @@ def professor_dashboard(request):
     # ── Dados para gráficos ───────────────────────────────────
     # Ano letivo: Setembro 2025 – Julho 2026
     ano_letivo_inicio = timezone.make_aware(
-        datetime.combine(datetime(2025, 9, 1).date(), time.min)
+        dt.datetime(2025, 9, 1, 0, 0, 0)
     )
-
     ano_letivo_fim = timezone.make_aware(
-        datetime.combine(datetime(2026, 7, 31).date(), time.max)
+        dt.datetime(2026, 7, 31, 23, 59, 59)
     )
 
     # Aulas dadas por mês (linha)
