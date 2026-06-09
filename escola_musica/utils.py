@@ -7,10 +7,68 @@ from django.contrib.auth.models import User
 from decouple import config
 from .models import Aluno as AlunoModel
 
+import functools
+from django.shortcuts import redirect
+from django.contrib import messages
 
 # ─────────────────────────────────────────────────────────────
 # AUTORIZAÇÃO — grupos e permissões
 # ─────────────────────────────────────────────────────────────
+
+def utilizador_pode_aceder_matriculas(user):
+    """
+    Retorna True se o utilizador pode aceder à área de matrículas.
+    Acesso permitido: superutilizadores, staff e grupo Recepção.
+    Bloqueado: alunos, professores e qualquer outro perfil.
+    """
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser or user.is_staff:
+        return True
+    # Grupo Recepção — tem permissões específicas de matrícula
+    return user.groups.filter(name='Recepcao').exists()
+
+
+def requer_acesso_matriculas(view_func):
+    """
+    Decorator que bloqueia alunos, professores e utilizadores
+    sem permissão de aceder às views de matrículas.
+    Redireciona para o dashboard correto com mensagem de erro.
+    """
+    
+
+    @functools.wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        if utilizador_pode_aceder_matriculas(request.user):
+            return view_func(request, *args, **kwargs)
+
+        # Utilizador autenticado mas sem permissão
+        # Redireciona para o dashboard correto sem revelar conteúdo
+        if hasattr(request.user, 'aluno'):
+            messages.error(
+                request,
+                "Não tens permissão para aceder a esta área."
+            )
+            return redirect('aluno_dashboard')
+
+        if hasattr(request.user, 'professor'):
+            messages.error(
+                request,
+                "Não tens permissão para aceder a esta área."
+            )
+            return redirect('professor_dashboard')
+
+        # Utilizador sem perfil conhecido
+        messages.error(
+            request,
+            "Não tens permissão para aceder a esta área."
+        )
+        return redirect('mainpage')
+
+    return wrapper
 
 def utilizador_e_recepcao(user):
     """Retorna True se o utilizador pertence ao grupo Recepção."""

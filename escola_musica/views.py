@@ -36,6 +36,7 @@ from .utils import (
     pagamento_e_protegido,
     associar_user_aluno,
     associar_user_professor,
+    requer_acesso_matriculas,
 )
 
 
@@ -505,6 +506,7 @@ def professor_dashboard(request):
 # ─────────────────────────────────────────
 
 @login_required
+@requer_acesso_matriculas
 def matriculas_lista(request):
     pendente = request.session.get('matricula_pendente', None)
 
@@ -521,6 +523,7 @@ def matriculas_lista(request):
 
 
 @login_required
+@requer_acesso_matriculas
 def matricula_nova(request):
     """
     GET -> formulário com dados do aluno, matrícula e pagamento.
@@ -695,6 +698,7 @@ def matricula_nova(request):
     })
 
 @login_required
+@requer_acesso_matriculas
 def matricula_cancelar(request):
     """
     Limpa os dados pendentes da session sem gravar nada na BD.
@@ -707,6 +711,7 @@ def matricula_cancelar(request):
 
 @login_required
 @require_POST
+@requer_acesso_matriculas
 def matricula_confirmar(request):
     """
     Grava efectivamente na BD após confirmação na modal.
@@ -802,6 +807,7 @@ def matricula_confirmar(request):
 
 
 @login_required
+@requer_acesso_matriculas
 def matricula_detalhe(request, pk):
     matricula = get_object_or_404(
         Matricula.objects.select_related(
@@ -815,6 +821,7 @@ def matricula_detalhe(request, pk):
 
 
 @login_required
+@requer_acesso_matriculas
 def matricula_editar(request, pk):
     """
     Edição de matrícula.
@@ -941,6 +948,7 @@ def matricula_editar(request, pk):
     })
 
 @login_required
+@requer_acesso_matriculas
 def matricula_eliminar(request, pk):
     """
     Apenas superutilizadores podem eliminar matrículas.
