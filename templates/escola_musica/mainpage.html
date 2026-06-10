@@ -1,4 +1,3 @@
-```django
 {% load static %}
 
 <!DOCTYPE html>
@@ -17,6 +16,8 @@
 
     <link rel="stylesheet"
           href="{% static 'escola_musica/css/mainpage.css' %}">
+
+    <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
 </head>
 
 <body class="mainpage-body">
@@ -57,8 +58,14 @@
         <header class="hero-scene__cabecalho">
 
             <h1 class="hero-scene__titulo">
-                Escola de Música LF
+                Escola de Música
+                
             </h1>
+            <img
+                src="{% static 'escola_musica/images/LogoDouradaSemFundo.webp' %}"
+                alt="LF"
+                class="navbar__logo-img"
+            >
 
             <p class="hero-scene__subtitulo">
                 Mural de acessos
@@ -133,4 +140,3 @@
 
 </body>
 </html>
-```

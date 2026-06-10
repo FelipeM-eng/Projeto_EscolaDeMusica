@@ -12,9 +12,9 @@
 <div class="pagina-cabecalho">
   <div>
     <h1 class="pagina-titulo">Eliminar Matrícula</h1>
-    <p class="pagina-subtitulo">Esta acção é irreversível.</p>
+    <p class="pagina-subtitulo">Esta ação é irreversível.</p>
   </div>
-  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">← Cancelar</a>
+  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">Cancelar</a>
 </div>
 
 <!-- Card de aviso -->
@@ -27,7 +27,7 @@
         Tens a certeza que queres eliminar esta matrícula?
       </p>
       <p class="eliminar-card__descricao">
-        Esta acção eliminará permanentemente a matrícula e o
+        Esta ação eliminará permanentemente a matrícula e o
         pagamento associado. Não é possível reverter esta operação.
       </p>
     </div>
@@ -64,7 +64,7 @@
   <!-- Acções -->
   <div class="eliminar-card__acoes">
     <a href="{% url 'matriculas_lista' %}" class="btn-secundario">
-      Cancelar — manter matrícula
+      Manter matrícula
     </a>
 
     <form method="POST"

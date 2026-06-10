@@ -197,7 +197,6 @@ class UtilizadorEditarForm(forms.ModelForm):
 
     class Meta:
         model  = User
-        # is_active removido — gerido pelo card de estado (acção toggle)
         # is_superuser NUNCA aqui
         fields = ['first_name', 'last_name', 'email']
         widgets = {

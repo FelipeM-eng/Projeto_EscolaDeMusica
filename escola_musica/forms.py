@@ -593,7 +593,7 @@ class AlunoEdicaoForm(forms.Form):
     email = forms.CharField(
         label='Email',
         max_length=120,
-        required=False,
+        required=True,   # ← obrigatório para garantir conta de acesso
         widget=forms.EmailInput(attrs={
             'class':        'campo-input',
             'placeholder':  'Ex: exemplo@email.com',

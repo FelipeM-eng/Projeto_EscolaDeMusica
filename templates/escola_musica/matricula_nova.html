@@ -19,7 +19,7 @@
       Os dados serão apresentados para confirmação antes de serem guardados.
     </p>
   </div>
-  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">← Cancelar</a>
+  <a href="{% url 'matriculas_lista' %}" class="btn-secundario">Cancelar</a>
 </div>
 
 <form method="POST"
@@ -52,7 +52,7 @@
       <div class="form-grupo {% if form_aluno.email.errors %}form-grupo--erro{% endif %}">
         <label for="{{ form_aluno.email.id_for_label }}">
           {{ form_aluno.email.label }}
-          <span class="campo-opcional">(opcional)</span>
+          <span class="obrigatorio">*</span>
         </label>
         {{ form_aluno.email }}
         {% for erro in form_aluno.email.errors %}
