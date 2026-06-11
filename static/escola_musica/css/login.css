@@ -8,9 +8,9 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse at 30% 50%, rgba(123, 79, 166, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse at 70% 30%, rgba(201, 168, 76, 0.10) 0%, transparent 50%),
-    #0a0a0f;
+    radial-gradient(ellipse 55% 45% at 50% 42%, rgba(45, 38, 30, 0.9) 0%, transparent 70%),
+        radial-gradient(ellipse 100% 80% at 50% 100%, #12100e 0%, #050508 55%),
+        linear-gradient(180deg, #08080c 0%, #0f0d12 40%, #1a1612 100%);
 }
 
 .login-caixa {
