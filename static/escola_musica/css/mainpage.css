@@ -406,3 +406,138 @@ body {
 
     .hero-scene__po { display: none; }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================
+   QUEDA DOS CARTAZES
+   ========================== */
+
+.hero-scene__holder--caindo {
+    pointer-events: none;
+    z-index: 999;
+    transform-origin: top center;
+}
+
+.hero-scene__holder--caindo .hero-scene__alfinete {
+    animation: hero-alfinete-cair 0.22s ease-in forwards;
+}
+
+.hero-scene__holder--caindo img {
+    animation: hero-papel-cair 1.15s cubic-bezier(.18,.8,.22,1) forwards;
+}
+
+@keyframes hero-alfinete-cair {
+
+    0% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(-50%) translateY(28px);
+        opacity: 0;
+    }
+}
+
+@keyframes hero-papel-cair {
+
+  0% {
+    transform: translateY(0vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  5% {
+    transform: translateY(0.3vh) rotate(0.5deg);
+  }
+
+  10% {
+    transform: translateY(1.2vh) rotate(1deg);
+  }
+
+  15% {
+    transform: translateY(2.7vh) rotate(1.5deg);
+  }
+
+  20% {
+    transform: translateY(4.8vh) rotate(2deg);
+  }
+
+  25% {
+    transform: translateY(7.5vh) rotate(1deg);
+  }
+
+  30% {
+    transform: translateY(10.8vh) rotate(0deg);
+  }
+
+  35% {
+    transform: translateY(14.7vh) rotate(-1deg);
+  }
+
+  40% {
+    transform: translateY(19.2vh) rotate(-2deg);
+  }
+
+  45% {
+    transform: translateY(24.3vh) rotate(-1.5deg);
+  }
+
+  50% {
+    transform: translateY(30vh) rotate(-1deg);
+  }
+
+  55% {
+    transform: translateY(36.3vh) rotate(0deg);
+  }
+
+  60% {
+    transform: translateY(43.2vh) rotate(1deg);
+  }
+
+  65% {
+    transform: translateY(50.7vh) rotate(2deg);
+  }
+
+  70% {
+    transform: translateY(58.8vh) rotate(2.5deg);
+  }
+
+  75% {
+    transform: translateY(67.5vh) rotate(2deg);
+  }
+
+  80% {
+    transform: translateY(76.8vh) rotate(1deg);
+  }
+
+  85% {
+    transform: translateY(86.7vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  90% {
+    transform: translateY(97.2vh) rotate(-1deg);
+    opacity: 0.6;
+  }
+
+  95% {
+    transform: translateY(108.3vh) rotate(-2deg);
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateY(120vh) rotate(0deg);
+    opacity: 0;
+  }
+}

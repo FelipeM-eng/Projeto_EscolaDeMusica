@@ -32,21 +32,48 @@
   }
 
   function ligarCartazes() {
-    document.querySelectorAll(SELECTOR_HOLDER).forEach(holder => {
 
-      holder.addEventListener('click', () => {
+  document.querySelectorAll(SELECTOR_HOLDER).forEach(holder => {
+
+    function iniciarQueda() {
+
+    if (holder.classList.contains('hero-scene__holder--caindo')) {
+        return;
+    }
+
+    holder.classList.add('hero-scene__holder--caindo');
+
+    holder.classList.add('hero-scene__holder--balanco');
+
+    setTimeout(() => {
+
+        holder.classList.remove('hero-scene__holder--balanco');
+
+        holder.classList.add('hero-scene__holder--queda');
+
+    }, 300);
+
+    setTimeout(() => {
+
         navegar(holder.dataset.url);
-      });
 
-      holder.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          navegar(holder.dataset.url);
-        }
-      });
+    }, 1300);
+}
+
+    holder.addEventListener('click', iniciarQueda);
+
+    holder.addEventListener('keydown', e => {
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        iniciarQueda();
+      }
 
     });
-  }
+
+  });
+
+}
 
   function ligarParallax() {
 
@@ -204,5 +231,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', init);
+
+  
 
 })();
