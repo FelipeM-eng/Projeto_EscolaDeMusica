@@ -47,25 +47,53 @@
       <div class="painel-card card-neutral">
         <p class="painel-card__titulo">👤 Dados do utilizador</p>
 
-        {% for field in form_dados %}
-          <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
-            <label for="{{ field.id_for_label }}">
-              {{ field.label }}
-              {% if field.field.required %}
-                <span class="obrigatorio">*</span>
-              {% endif %}
+        {# 1. Renderiza campos ocultos primeiro (se existirem) para não quebrar o layout #}
+        {% for hidden in form_dados.hidden_fields %}
+          {{ hidden }}
+        {% endfor %}
+
+        {# 2. Loop pelos campos visíveis #}
+        {% for field in form_dados.visible_fields %}
+          {% if field.name != 'is_staff' %}
+            <div class="form-grupo {% if field.errors %}form-grupo--erro{% endif %}">
+              <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {% if field.field.required %}
+                  <span class="obrigatorio" aria-hidden="true">*</span>
+                {% endif %}
+              </label>
+
+              {{ field }}
+
+              {% for erro in field.errors %}
+                <span class="form-erro" role="alert">
+                  <span class="form-erro__icone">!</span>{{ erro }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+
+        {# 3. Renderização isolada do is_staff (apenas se ele existir no formulário) #}
+        {% if form_dados.is_staff %}
+          <div class="form-grupo form-grupo-checkbox {% if form_dados.is_staff.errors %}form-grupo--erro{% endif %}">
+            {{ form_dados.is_staff }}
+
+            <label for="{{ form_dados.is_staff.id_for_label }}">
+              {{ form_dados.is_staff.label }}
             </label>
-            {{ field }}
-            {% for erro in field.errors %}
+
+            {% for erro in form_dados.is_staff.errors %}
               <span class="form-erro" role="alert">
                 <span class="form-erro__icone">!</span>{{ erro }}
               </span>
             {% endfor %}
           </div>
-        {% endfor %}
+        {% endif %}
 
+        {# 4. Erros gerais do formulário #}
         {% if form_dados.non_field_errors %}
-          <div class="alerta alerta--error">
+          <div class="alerta alerta--error" role="alert">
             {% for erro in form_dados.non_field_errors %}
               <p>{{ erro }}</p>
             {% endfor %}

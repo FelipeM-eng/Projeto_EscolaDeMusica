@@ -112,3 +112,19 @@
   border-top: 1px solid var(--cor-borda);
   flex-wrap: wrap;
 }
+
+.form-grupo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.form-grupo-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.form-grupo-checkbox label {
+  display: inline;
+  margin: 0;
+}
