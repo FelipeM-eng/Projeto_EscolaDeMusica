@@ -284,3 +284,142 @@ body {
   display: inline-block;
   object-fit: contain;
 }
+
+/* ═══════════════════════════════════════════════
+   FUNDO CINEMATOGRÁFICO GLOBAL
+   Aplicado em todas as páginas via .pagina-protegida
+   Versão mais subtil que a mainpage — não compete
+   com o conteúdo das páginas internas
+═══════════════════════════════════════════════ */
+
+/* Canvas de partículas — posicionado atrás de tudo */
+#fundo-po-global {
+  position:      fixed;
+  inset:         0;
+  width:         100%;
+  height:        100%;
+  pointer-events: none;
+  z-index:       0;
+  opacity:       0.35;
+  mix-blend-mode: screen;
+}
+
+/* Camadas de fundo fixas */
+.fundo-global {
+  position:       fixed;
+  inset:          0;
+  pointer-events: none;
+  z-index:        0;
+}
+
+.fundo-global__profundidade {
+  position:   absolute;
+  inset:      0;
+  background:
+    radial-gradient(
+      ellipse 60% 50% at 50% 30%,
+      rgba(45, 38, 30, 0.6) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 100% 60% at 50% 100%,
+      rgba(18, 16, 14, 0.8) 0%,
+      transparent 60%
+    );
+}
+
+.fundo-global__spot {
+  position:   absolute;
+  inset:      0;
+  background: radial-gradient(
+    ellipse 50% 40% at 50% 20%,
+    rgba(201, 168, 76, 0.06) 0%,
+    rgba(201, 168, 76, 0.02) 40%,
+    transparent 68%
+  );
+  animation: fundo-spot-respiro 9s ease-in-out infinite;
+}
+
+@keyframes fundo-spot-respiro {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1;   }
+}
+
+.fundo-global__feixes {
+  position:       absolute;
+  inset:          0;
+  mix-blend-mode: screen;
+  opacity:        0.18;
+}
+
+.fundo-global__feixe {
+  position:   absolute;
+  top:        -5%;
+  height:     70%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 236, 200, 0.35) 0%,
+    transparent 75%
+  );
+  filter:     blur(14px);
+  animation:  fundo-feixe 10s ease-in-out infinite;
+}
+
+.fundo-global__feixe:nth-child(1) {
+  left:            28%;
+  width:           10%;
+  transform:       rotate(-6deg);
+}
+
+.fundo-global__feixe:nth-child(2) {
+  left:            48%;
+  width:           14%;
+  transform:       rotate(0deg);
+  animation-delay: -3s;
+}
+
+.fundo-global__feixe:nth-child(3) {
+  left:            62%;
+  width:           9%;
+  transform:       rotate(5deg);
+  animation-delay: -6s;
+}
+
+@keyframes fundo-feixe {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.6; }
+}
+
+.fundo-global__vinheta {
+  position:   absolute;
+  inset:      0;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    transparent 20%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+}
+
+.fundo-global__grain {
+  position:   absolute;
+  inset:      0;
+  opacity:    0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Garante que o conteúdo das páginas fica sempre
+   acima do fundo global */
+.navbar  { position: sticky; z-index: 100; }
+.conteudo { position: relative; z-index: 10; }
+
+/* Reduzir movimento — remove animações do fundo */
+@media (prefers-reduced-motion: reduce) {
+  .fundo-global__spot,
+  .fundo-global__feixe {
+    animation: none;
+  }
+  #fundo-po-global {
+    display: none;
+  }
+}

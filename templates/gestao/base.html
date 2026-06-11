@@ -16,7 +16,27 @@
 
   {% block css_extra %}{% endblock %}
 </head>
-<body class="pagina-protegida">
+
+<body class="{% block body_class %}pagina-protegida{% endblock %}">
+
+  <!-- Fundo cinematográfico global -->
+  {% block fundo_global %}
+    <div class="fundo-global" aria-hidden="true">
+      <div class="fundo-global__profundidade"></div>
+      <div class="fundo-global__spot"></div>
+
+      <div class="fundo-global__feixes">
+        <span class="fundo-global__feixe"></span>
+        <span class="fundo-global__feixe"></span>
+        <span class="fundo-global__feixe"></span>
+      </div>
+
+      <div class="fundo-global__vinheta"></div>
+      <div class="fundo-global__grain"></div>
+    </div>
+
+    <canvas id="fundo-po-global" aria-hidden="true"></canvas>
+  {% endblock %}
 
   <!-- Navbar do painel — separada da navbar principal -->
   <nav class="navbar gestao-navbar">
@@ -29,6 +49,7 @@
     <div class="navbar__utilizador">
       <span class="gestao-navbar__utilizador">
         {{ request.user.username }}
+
         {% if request.user.is_superuser %}
           <span class="badge badge--pago">super</span>
         {% elif request.user.is_staff %}
@@ -36,14 +57,14 @@
         {% endif %}
       </span>
 
-      <!-- Link para área principal se for staff/superuser -->
       <a href="{% url 'matriculas_lista' %}" class="btn-ver">
         Área principal
       </a>
 
-      <!-- Logout do painel -->
-      <form method="POST" action="{% url 'gestao_logout' %}"
-            id="form-logout-gestao" style="display:inline">
+      <form method="POST"
+            action="{% url 'gestao_logout' %}"
+            id="form-logout-gestao"
+            style="display:inline">
         {% csrf_token %}
         <button type="submit" class="btn-logout">Sair</button>
       </form>
@@ -52,7 +73,6 @@
 
   <main class="conteudo">
 
-    <!-- Mensagens Django reutilizadas -->
     {% if messages %}
       <div class="mensagens">
         {% for msg in messages %}

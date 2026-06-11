@@ -14,6 +14,25 @@
 </head>
 <body class="{% block body_class %}pagina-protegida{% endblock %}">
 
+  <!-- ══ FUNDO CINEMATOGRÁFICO GLOBAL ══
+       Posicionado fixo atrás de todo o conteúdo.
+       Excluído da mainpage pelo body_class override.
+  ══ -->
+  {% block fundo_global %}
+  <div class="fundo-global" aria-hidden="true">
+    <div class="fundo-global__profundidade"></div>
+    <div class="fundo-global__spot"></div>
+    <div class="fundo-global__feixes">
+      <span class="fundo-global__feixe"></span>
+      <span class="fundo-global__feixe"></span>
+      <span class="fundo-global__feixe"></span>
+    </div>
+    <div class="fundo-global__vinheta"></div>
+    <div class="fundo-global__grain"></div>
+  </div>
+  <canvas id="fundo-po-global" aria-hidden="true"></canvas>
+  {% endblock %}
+
   <nav class="navbar">
     <a href="{% url 'matriculas_lista' %}" class="navbar__logo">
       <span class="navbar__logo-texto">Escola de Música</span>
