@@ -18,6 +18,8 @@
           href="{% static 'escola_musica/css/mainpage.css' %}">
 
     <link rel="stylesheet" href="{% static 'escola_musica/css/base.css' %}">
+
+    <link rel="stylesheet" href="{% static 'escola_musica/css/portfolio.css' %}">
 </head>
 
 <body class="mainpage-body">
@@ -96,7 +98,7 @@
                         <span class="hero-scene__alfinete"
                               aria-hidden="true"></span>
 
-                        <img src="{% static 'escola_musica/images/cartaz aluno.jpg' %}"
+                        <img src="{% static 'escola_musica/images/cartaz_aluno.jpg' %}"
                              alt="Cartaz Login Aluno">
                     </div>
 
@@ -109,7 +111,7 @@
                         <span class="hero-scene__alfinete"
                               aria-hidden="true"></span>
 
-                        <img src="{% static 'escola_musica/images/cartaz professor.jpg' %}"
+                        <img src="{% static 'escola_musica/images/cartaz_professor.jpg' %}"
                              alt="Cartaz Login Professor">
                     </div>
 
@@ -122,7 +124,7 @@
                         <span class="hero-scene__alfinete"
                               aria-hidden="true"></span>
 
-                        <img src="{% static 'escola_musica/images/cartaz administrador.jpg' %}"
+                        <img src="{% static 'escola_musica/images/cartaz_administrador.jpg' %}"
                              alt="Cartaz Login Administração">
                     </div>
 
@@ -135,6 +137,166 @@
     </div>
 
 </section>
+
+<!-- ============ PORTFÓLIO DE CURSOS ============ -->
+<section id="portfolio" class="portfolio">
+  <!-- Cabeçalho com pin + reveal por palavra -->
+  <header class="portfolio__intro">
+    <p class="portfolio__eyebrow"><span>01 — Repertório</span></p>
+    <h2 class="portfolio__title split-words">
+      Quatro caminhos. Uma mesma escuta atenta.
+    </h2>
+    <p class="portfolio__lede split-words">
+      Bateria, violão, canto e piano. cada curso pensado como uma jornada própria,
+      do primeiro contato ao palco.
+    </p>
+
+    <!-- Nav lateral sticky -->
+    <nav class="portfolio__nav" aria-label="Cursos">
+      <a href="#curso--bateria" data-target="curso--bateria"><span>01</span> Bateria</a>
+      <a href="#curso--violao"  data-target="curso--violao"><span>02</span> Violão</a>
+      <a href="#curso--canto"   data-target="curso--canto"><span>03</span> Canto</a>
+      <a href="#curso--piano"   data-target="curso--piano"><span>04</span> Piano</a>
+    </nav>
+  </header>
+
+  <!-- ============ BATERIA ============ -->
+  <article id="curso--bateria" class="curso" data-curso="bateria">
+    <div class="curso__sticky">
+      <span class="curso__index" data-counter="01">01</span>
+      <span class="curso__kicker">Pulso · Groove · Dinâmica</span>
+    </div>
+
+    <div class="curso__content">
+      <h3 class="curso__title split-chars">Bateria</h3>
+
+      <p class="curso__lede reveal-up">
+        Do rudimento ao groove. Construímos independência, leitura e musicalidade
+        com escuta ativa e repertório real.
+      </p>
+
+      <figure class="curso__media curso__media--parallax">
+        <img src="{% static 'escola_musica/images/bateriacomFoco.jpg' %}" alt="Aula de bateria">
+      </figure>
+
+      <ul class="curso__timeline">
+        <li class="reveal-line"><strong>Mês 1–2</strong> Postura, técnica de mãos, leitura básica.</li>
+        <li class="reveal-line"><strong>Mês 3–4</strong> Independência, grooves de rock, pop e samba.</li>
+        <li class="reveal-line"><strong>Mês 5+</strong>  Improvisação, viradas, ensaio em banda.</li>
+      </ul>
+
+      <ul class="curso__tags">
+        <li>Iniciante</li><li>Intermediário</li><li>Avançado</li><li>Aulas em banda</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ============ VIOLÃO ============ -->
+  <article id="curso--violao" class="curso" data-curso="violao">
+    <div class="curso__sticky">
+      <span class="curso__index" data-counter="02">02</span>
+      <span class="curso__kicker">Harmonia · Acompanhamento · Solo</span>
+    </div>
+
+    <div class="curso__content">
+      <h3 class="curso__title split-chars">Violão</h3>
+      <p class="curso__lede reveal-up">
+        Acordes que respiram, dedilhados que cantam. Repertório brasileiro e
+        internacional para tocar sozinho ou em roda.
+      </p>
+
+
+      <figure class="curso__media curso__media--parallax">
+        <img src="{% static 'escola_musica/images/fundo_violao.jpg' %}" alt="Aula de violão">
+      </figure>
+
+      <ul class="curso__timeline">
+        <li class="reveal-line"><strong>Mês 1–2</strong> Acordes maiores/menores, ritmos básicos.</li>
+        <li class="reveal-line"><strong>Mês 3–4</strong> Dedilhado, leitura de cifras, MPB.</li>
+        <li class="reveal-line"><strong>Mês 5+</strong>  Harmonia funcional, improviso e arranjo solo.</li>
+      </ul>
+
+      <ul class="curso__tags">
+        <li>MPB</li><li>Bossa</li><li>Pop/Rock</li><li>Clássico</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ============ CANTO ============ -->
+  <article id="curso--canto" class="curso" data-curso="canto">
+    <div class="curso__sticky">
+      <span class="curso__index" data-counter="03">03</span>
+      <span class="curso__kicker">Respiração · Afinação · Interpretação</span>
+    </div>
+
+    <div class="curso__content">
+      <h3 class="curso__title split-chars">Canto</h3>
+      <p class="curso__lede reveal-up">
+        A voz como instrumento. Técnica vocal saudável, expansão de extensão
+        e presença cênica.
+      </p>
+
+      <figure class="curso__media curso__media--parallax">
+        <img src="{% static 'escola_musica/images/CAntorEmPe.jpg' %}" alt="Aula de canto">
+      </figure>
+
+      <ul class="curso__timeline">
+        <li class="reveal-line"><strong>Mês 1–2</strong> Respiração diafragmática, aquecimento.</li>
+        <li class="reveal-line"><strong>Mês 3–4</strong> Afinação, ressonância, repertório.</li>
+        <li class="reveal-line"><strong>Mês 5+</strong>  Interpretação, microfonação, palco.</li>
+      </ul>
+
+      <ul class="curso__tags">
+        <li>Pop</li><li>MPB</li><li>Jazz</li><li>Musical</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ============ PIANO ============ -->
+  <article id="curso--piano" class="curso" data-curso="piano">
+    <div class="curso__sticky">
+      <span class="curso__index" data-counter="04">04</span>
+      <span class="curso__kicker">Técnica · Leitura · Repertório</span>
+    </div>
+
+    <div class="curso__content">
+      <h3 class="curso__title split-chars">Piano</h3>
+      <p class="curso__lede reveal-up">
+        Do erudito ao popular. Teclado como ferramenta de composição,
+        acompanhamento e expressão.
+      </p>
+
+      <figure class="curso__media curso__media--parallax">
+        <img src="{% static 'escola_musica/images/pianoPortifolio.webp' %}" alt="Aula de piano">
+      </figure>
+
+      <ul class="curso__timeline">
+        <li class="reveal-line"><strong>Mês 1–2</strong> Postura, leitura nas duas claves.</li>
+        <li class="reveal-line"><strong>Mês 3–4</strong> Escalas, acordes, primeiras peças.</li>
+        <li class="reveal-line"><strong>Mês 5+</strong>  Repertório clássico/popular, improviso.</li>
+      </ul>
+
+      <ul class="curso__tags">
+        <li>Clássico</li><li>Jazz</li><li>Pop</li><li>Composição</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- Faixa final com números que entram com scroll -->
+  <footer class="portfolio__stats">
+    <div class="stat"><span class="stat__num" data-count="12">0</span><span class="stat__label">anos de escola</span></div>
+    <div class="stat"><span class="stat__num" data-count="400">0</span><span class="stat__label">alunos formados</span></div>
+    <div class="stat"><span class="stat__num" data-count="4">0</span><span class="stat__label">instrumentos</span></div>
+    <div class="stat"><span class="stat__num" data-count="60">0</span><span class="stat__label">apresentações/ano</span></div>
+  </footer>
+</section>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<!-- ScrollTrigger -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="{% static 'escola_musica/js/portfolio.js' %}"></script>
 
 <script src="{% static 'escola_musica/js/mainpage.js' %}"></script>
 
