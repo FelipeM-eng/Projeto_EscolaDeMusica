@@ -49,7 +49,6 @@
     <div class="navbar__utilizador">
       <span class="gestao-navbar__utilizador">
         {{ request.user.username }}
-
         {% if request.user.is_superuser %}
           <span class="badge badge--pago">super</span>
         {% elif request.user.is_staff %}

@@ -827,7 +827,6 @@ def gestao_utilizador_toggle(request, pk, alvo=None):
             request,
             f"Conta de '{alvo.username}' {estado}."
         )
-
     except Exception as e:
         logger.error(
             f"Erro ao toggle pk={pk} | "
