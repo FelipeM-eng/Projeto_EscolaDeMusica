@@ -18,6 +18,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'escola_musica',
+    
+    # Django REST Framework
+    'rest_framework',
+    
+    # Autenticação JWT
+    'rest_framework_simplejwt',
+    
+    # CORS para frontend Vercel
+    'corsheaders',
+    
+    # Documentação Swagger/OpenAPI
+    'drf_spectacular',
 ]
 
 # ─── DJANGO-AXES — protecção contra brute force ───────────────────────────────
@@ -26,6 +38,7 @@ INSTALLED_APPS += ['axes']
 # ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS deve vir antes de CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',        # proteção CSRF ativa
@@ -199,4 +212,54 @@ LOGGING['loggers']['gestao_auditoria'] = {
 }
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# ─── DJANGO REST FRAMEWORK ─────────────────────────────────────────────────────
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# ─── JWT CONFIGURATION ─────────────────────────────────────────────────────────
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
+# ─── CORS CONFIGURATION (Vercel Frontend) ───────────────────────────────────────
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=lambda x: [s.strip() for s in x.split(',')]
+)
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Em produção (Render), permitir todas as origins da Vercel via variável de ambiente
+# Exemplo de .env: CORS_ALLOWED_ORIGINS=https://seu-frontend.vercel.app
+
+# ─── SWAGGER/OPENAPI CONFIGURATION ────────────────────────────────────────────
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Escola de Música API',
+    'DESCRIPTION': 'API REST para gestão de escola de música (alunos, professores, matrículas, aulas)',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/v1',
+}
 

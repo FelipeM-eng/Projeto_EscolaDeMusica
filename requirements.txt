@@ -1,19 +1,19 @@
 # Core Django
-Django==5.1.1
-django-decouple==4.2.1
+Django==6.0.4
+python-decouple==3.8
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.12
 
 # Security
-django-axes==8.3.0
+django-axes==8.3.1
 
 # Django REST Framework
-djangorestframework==3.15.2
+djangorestframework==3.17.1
 djangorestframework-simplejwt==5.4.0
 
 # CORS (para frontend Vercel)
 django-cors-headers==4.6.0
 
 # Swagger/OpenAPI Documentation
-drf-spectacular==0.28.1
+drf-spectacular==0.28.0
