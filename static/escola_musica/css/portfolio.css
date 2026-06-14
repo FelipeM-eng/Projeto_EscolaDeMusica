@@ -1,7 +1,10 @@
 /* ===== PORTFÓLIO ===== */
 .portfolio{
   --bg:#0e0d0b; --fg:#f3ede2; --muted:#8a8275; --accent:#c9a24b; --line:rgba(243,237,226,.12);
-  background:var(--bg); color:var(--fg);
+  background:
+        radial-gradient(ellipse 55% 45% at 50% 42%, rgba(45, 38, 30, 0.9) 0%, transparent 70%),
+        radial-gradient(ellipse 100% 80% at 50% 100%, #12100e 0%, #050508 55%),
+        linear-gradient(180deg, #08080c 0%, #0f0d12 40%, #1a1612 100%);
   padding:clamp(6rem,12vw,12rem) clamp(1.25rem,5vw,5rem);
   font-family:'Fraunces',serif;
   position:relative; overflow:clip;
