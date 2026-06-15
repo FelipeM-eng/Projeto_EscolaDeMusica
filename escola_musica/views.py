@@ -905,7 +905,7 @@ def matricula_editar(request, pk):
                     messages.success(
                         request,
                         f"Matrícula #{matricula.id_matricula} "
-                        "actualizada com sucesso."
+                        "atualizada com sucesso."
                     )
                     # Redireciona para a LISTA (não para o detalhe)
                     return redirect('matriculas_lista')
@@ -927,7 +927,7 @@ def matricula_editar(request, pk):
                     )
                     messages.error(
                         request,
-                        "Não foi possível actualizar. Tenta novamente."
+                        "Não foi possível atualizar. Tenta novamente."
                     )
                 except Exception as e:
                     logger.error(
@@ -965,7 +965,7 @@ def matricula_eliminar(request, pk):
         messages.error(
             request,
             "Não tens permissão para eliminar matrículas. "
-            "Esta acção está reservada a administradores."
+            "Esta ação está reservada a administradores."
         )
         return redirect('matriculas_lista')
 
@@ -1032,8 +1032,8 @@ def matricula_eliminar(request, pk):
                 messages.warning(
                     request,
                     f"Matrícula #{id_matricula} eliminada. "
-                    f"Era a última matrícula de '{nome_aluno}' "
-                    f"— a conta de acesso foi desativada automaticamente."
+                    f"Era a última matrícula de '{nome_aluno}'. "
+                    f"a conta de acesso foi desativada automaticamente."
                 )
             else:
                 messages.success(

@@ -208,7 +208,7 @@ def gestao_utilizador_criar(request):
             )
             messages.error(
                 request,
-                "Não foi possível criar o utilizador — email ou username duplicado."
+                "Não foi possível criar o utilizador. O email ou username já existem."
             )
         except Exception as e:
             logger.error(
