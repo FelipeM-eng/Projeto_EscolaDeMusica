@@ -48,19 +48,6 @@ from .utils import (
 def mainpage(request):
     return render(request, 'escola_musica/mainpage.html')
 
-def curso_canto(request):
-    return render(request, 'escola_musica/cursos/canto.html')
-
-def curso_bateria(request):
-    return render(request, 'escola_musica/cursos/bateria.html')
-
-def curso_piano(request):
-    return render(request, 'escola_musica/cursos/piano.html')
-
-def curso_violao(request):
-    return render(request, 'escola_musica/cursos/violao.html')
-
-
 
 def login_view(request):
     """

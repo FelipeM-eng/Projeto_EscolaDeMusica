@@ -4,11 +4,7 @@ from . import views, gestao_views
 urlpatterns = [
     # ── Páginas públicas ──────────────────────────────────────
     path('',                                views.mainpage,            name='mainpage'),
-    path('curso/canto/',                    views.curso_canto,         name='curso_canto'),
-    path('curso/bateria/',                  views.curso_bateria,       name='curso_bateria'),
-    path('curso/piano/',                    views.curso_piano,         name='curso_piano'),
-    path('curso/violao/',                   views.curso_violao,        name='curso_violao'),
-
+    
     # Login administrativo (admin/staff)
     path('login/',                          views.login_view,          name='login'),
     path('logout/',                         views.logout_view,         name='logout'),
